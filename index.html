@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>环游中国 — 儿童地理学习</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:linear-gradient(160deg,#e0f7fa 0%,#e8f5e9 45%,#fff9c4 100%);min-height:100vh;overflow-x:hidden;color:#333}
+
+/* 顶部导航 */
+.top-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:linear-gradient(135deg,#1565c0,#0288d1,#00acc1);color:#fff;box-shadow:0 3px 12px rgba(0,0,0,.25);position:sticky;top:0;z-index:100;flex-wrap:wrap;gap:6px}
+.top-bar h1{font-size:1.1em;cursor:pointer;white-space:nowrap;margin:0}
+.top-bar h1 small{font-size:.55em;opacity:.8;font-weight:400}
+.nav-btns{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;flex:1}
+.nav-btn{padding:5px 10px;border:2px solid rgba(255,255,255,.45);border-radius:18px;background:rgba(255,255,255,.12);color:#fff;cursor:pointer;font-size:.78em;transition:all .2s;white-space:nowrap;font-family:inherit}
+.nav-btn:hover,.nav-btn.active{background:#fff;color:#1565c0;border-color:#fff;font-weight:700}
+.score-badge{background:linear-gradient(45deg,#ffd600,#ff9100);color:#fff;padding:4px 10px;border-radius:12px;font-weight:700;font-size:.85em;display:flex;align-items:center;gap:3px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+
+/* 页面容器 */
+.page{display:none;padding:12px 15px 90px;max-width:920px;margin:0 auto}
+.page.active{display:block;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* 首页 */
+.hero{text-align:center;padding:28px 10px 16px}
+.hero-emoji{font-size:3.4em;margin-bottom:8px;animation:floatY 3s ease-in-out infinite}
+@keyframes floatY{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-12px) rotate(2deg)}}
+.hero h2{font-size:1.7em;background:linear-gradient(90deg,#1565c0,#00838f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px}
+.hero p{color:#666;font-size:1em;line-height:1.7;margin-bottom:16px}
+.hero-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.hero-btns .nav-btn{font-size:.95em;padding:9px 22px;background:rgba(255,255,255,.92);color:#1565c0;border-color:#1565c0;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.hero-btns .nav-btn:hover{background:#1565c0;color:#fff}
+.feature-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:18px;padding:0 4px}
+@media(min-width:520px){.feature-grid{grid-template-columns:repeat(4,1fr)}}
+.feature-card{background:#fff;border-radius:14px;padding:16px 8px;text-align:center;cursor:pointer;transition:all .25s;box-shadow:0 2px 10px rgba(0,0,0,.07);border:2px solid transparent;display:flex;flex-direction:column;align-items:center;gap:4px}
+.feature-card:hover{transform:translateY(-5px);box-shadow:0 8px 24px rgba(0,0,0,.13);border-color:#1e88e5}
+.feature-card .icon{font-size:2em}
+.feature-card h3{font-size:.95em;color:#1565c0;margin:0}
+.feature-card p{font-size:.72em;color:#999;margin:0;line-height:1.4}
+
+/* 地图页 */
+.map-wrap{background:#fff;border-radius:16px;padding:14px;box-shadow:0 3px 14px rgba(0,0,0,.08)}
+.map-title{text-align:center;font-size:1.15em;color:#1565c0;margin-bottom:10px;font-weight:700}
+.region-tabs{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-bottom:12px}
+.region-tab{padding:4px 11px;border-radius:11px;border:1.5px solid #ccc;background:#fff;cursor:pointer;font-size:.78em;transition:all .2s;font-family:inherit}
+.region-tab.active,.region-tab:hover{background:#1e88e5;color:#fff;border-color:#1e88e5}
+.p-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:7px}
+.p-card{background:linear-gradient(135deg,#e3f2fd,#e1f5fe);border-radius:10px;padding:9px 4px;text-align:center;cursor:pointer;transition:all .2s;border:2px solid transparent;position:relative;overflow:hidden}
+.p-card:hover{transform:scale(1.04);box-shadow:0 4px 14px rgba(30,136,229,.18);border-color:#1e88e5}
+.p-card .p-emoji{font-size:1.6em;display:block;margin-bottom:2px}
+.p-card .p-name{font-weight:700;font-size:.88em;color:#1565c0;display:block}
+.p-card .p-abbr{font-size:.68em;color:#888;display:block}
+.p-card .p-cap{font-size:.65em;color:#777;display:block;margin-top:1px}
+.p-card.visited{background:linear-gradient(135deg,#e8f5e9,#c8e6c9)}
+.p-card.visited::after{content:"✅";position:absolute;top:3px;right:4px;font-size:.65em}
+
+/* 省份弹窗 */
+.modal-mask{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;justify-content:center;align-items:center;padding:12px;backdrop-filter:blur(3px)}
+.modal-mask.show{display:flex}
+.modal-box{background:#fff;border-radius:20px;width:100%;max-width:400px;max-height:85vh;overflow-y:auto;padding:22px 18px 18px;position:relative;animation:popIn .25s ease}
+@keyframes popIn{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-x{position:absolute;top:10px;right:14px;font-size:1.6em;cursor:pointer;color:#bbb;line-height:1;transition:.2s}
+.modal-x:hover{color:#e53935;transform:scale(1.2)}
+.modal-emoji{font-size:2.6em;text-align:center;display:block;margin-bottom:4px}
+.modal-box h2{color:#1565c0;text-align:center;font-size:1.3em;margin-bottom:2px}
+.modal-region{text-align:center;color:#999;font-size:.82em;margin-bottom:12px;display:block}
+.info-list{margin:8px 0}
+.info-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f5f5f5;font-size:.9em}
+.info-label{font-weight:700;color:#555;min-width:56px;flex-shrink:0;font-size:.88em}
+.info-val{color:#333}
+.tag-wrap{display:flex;flex-wrap:wrap;gap:4px}
+.tag{background:#e3f2fd;color:#1565c0;padding:2px 8px;border-radius:7px;font-size:.78em}
+.fun-fact{background:linear-gradient(135deg,#fffde7,#fff9c4);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:.84em;color:#5d4037;line-height:1.55}
+.fun-fact::before{content:"💡 ";}
+.btn-visit{width:100%;padding:10px;border:none;border-radius:12px;cursor:pointer;font-size:.95em;font-family:inherit;transition:all .2s;margin-top:12px;font-weight:700}
+.btn-visit.enabled{background:linear-gradient(45deg,#43a047,#66bb6a);color:#fff;box-shadow:0 3px 10px rgba(67,160,71,.3)}
+.btn-visit.enabled:hover{transform:scale(1.02)}
+.btn-visited{background:#e8f5e9;color:#43a047;cursor:default}
+
+/* 拼图页 */
+.pz-wrap{background:#fff;border-radius:16px;padding:14px;box-shadow:0 3px 14px rgba(0,0,0,.08)}
+.pz-title{text-align:center;font-size:1.1em;font-weight:700;color:#1565c0;margin-bottom:10px}
+.pz-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center;margin-bottom:12px}
+.pz-toolbar select,.pz-toolbar button{padding:6px 12px;border-radius:10px;border:1.5px solid #ccc;font-size:.84em;cursor:pointer;font-family:inherit;background:#fff}
+.pz-toolbar button{background:linear-gradient(135deg,#1e88e5,#42a5f5);color:#fff;border-color:transparent;font-weight:700}
+.pz-toolbar button:hover{opacity:.88;transform:scale(1.02)}
+.pz-board{display:grid;gap:5px;justify-content:center;margin-bottom:10px}
+.pz-piece{background:linear-gradient(135deg,#bbdefb,#90caf9);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:grab;font-size:.76em;font-weight:700;color:#1565c0;transition:all .15s;border:2px dashed #90a4ae;padding:4px 2px;user-select:none;min-height:38px;text-align:center}
+.pz-piece:hover{transform:scale(1.06);box-shadow:0 3px 10px rgba(0,0,0,.15)}
+.pz-piece.done{background:linear-gradient(135deg,#a5d6a7,#81c784);border-color:#43a047;cursor:default;color:#1b5e20}
+.pz-piece.done::after{content:" ✓";font-size:.9em}
+.pz-slot{background:#fafafa;border:2px dashed #bdbdbd;border-radius:8px;min-height:38px;display:flex;align-items:center;justify-content:center;font-size:.76em;color:#999;transition:all .2s}
+.pz-slot.filled{border-color:transparent;background:transparent;padding:0}
+.pz-slot.over{border-color:#1e88e5;background:#e3f2fd}
+.pz-tray{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-top:10px;padding:8px;background:#f5f5f5;border-radius:10px}
+.pz-progress{text-align:center;margin-top:10px;font-size:.88em;color:#555}
+.pz-bar{height:8px;background:#e0e0e0;border-radius:4px;margin-top:6px;overflow:hidden}
+.pz-bar-fill{height:100%;background:linear-gradient(90deg,#43a047,#66bb6a);border-radius:4px;transition:width .3s}
+
+/* 答题页 */
+.qz-wrap{background:#fff;border-radius:16px;padding:18px 15px;box-shadow:0 3px 14px rgba(0,0,0,.08);max-width:560px;margin:0 auto}
+.qz-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:6px}
+.qz-badge{background:linear-gradient(45deg,#fb8c00,#ffa726);color:#fff;padding:4px 12px;border-radius:12px;font-size:.82em;font-weight:700}
+.qz-q{font-size:1.05em;color:#333;margin-bottom:14px;line-height:1.6;padding:10px;background:#f5f5f5;border-radius:10px}
+.qz-opts{display:grid;gap:9px}
+.qz-opt{padding:11px 14px;background:#fafafa;border-radius:12px;cursor:pointer;transition:all .2s;border:2px solid #e0e0e0;font-size:.92em;font-family:inherit;text-align:left}
+.qz-opt:hover{border-color:#1e88e5;background:#e3f2fd;transform:scale(1.01)}
+.qz-opt.ok{border-color:#43a047;background:#e8f5e9;color:#2e7d32;font-weight:700}
+.qz-opt.no{border-color:#e53935;background:#ffebee;color:#c62828}
+.qz-fb{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:.88em;display:none;line-height:1.5}
+.qz-fb.show{display:block}
+.qz-fb.ok-fb{background:#e8f5e9;color:#2e7d32;border:1px solid #c8e6c9}
+.qz-fb.no-fb{background:#ffebee;color:#c62828;border:1px solid #ffcdd2}
+.qz-next{margin-top:12px;padding:8px 22px;background:linear-gradient(135deg,#1e88e5,#42a5f5);color:#fff;border:none;border-radius:12px;cursor:pointer;font-size:.9em;font-family:inherit;font-weight:700;display:none;transition:.2s}
+.qz-next.show{display:inline-block}
+.qz-next:hover{opacity:.9;transform:scale(1.03)}
+.qz-result{text-align:center;padding:28px 10px;display:none}
+.qz-result.show{display:block}
+.qz-result .r-emoji{font-size:3em;display:block;margin-bottom:8px}
+.qz-result .r-score{font-size:2.5em;font-weight:700;color:#ff6f00}
+.qz-result .r-stars{font-size:1.8em;margin:8px 0}
+
+/* 积分页 */
+.sc-wrap{max-width:500px;margin:0 auto}
+.sc-card{background:#fff;border-radius:16px;padding:16px;box-shadow:0 3px 14px rgba(0,0,0,.08);margin-bottom:12px}
+.sc-card h3{color:#1565c0;margin-bottom:10px;font-size:1.05em}
+.sc-total{font-size:2em;font-weight:700;color:#ff6f00}
+.badge-grid{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:5px 0}
+.badge{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5em;background:#f5f5f5;position:relative;border:2px solid #eee;transition:.2s}
+.badge.ok{background:linear-gradient(135deg,#fff9c4,#ffd54f);border-color:#ffd54f;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.badge.locked{filter:grayscale(1);opacity:.45}
+.badge .btip{display:none;position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:4px 9px;border-radius:6px;font-size:.62em;white-space:nowrap;z-index:10;pointer-events:none}
+.badge .btip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#333}
+.badge:hover .btip{display:block}
+.v-list{max-height:220px;overflow-y:auto;padding-right:5px}
+.v-item{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0f0f0;font-size:.85em;color:#555}
+.v-item:last-child{border-bottom:none}
+.empty-tip{text-align:center;color:#bbb;padding:20px;font-size:.9em}
+
+/* 滚动条 */
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-thumb{background:#bbb;border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- 顶部导航 -->
+<div class="top-bar">
+  <h1 onclick="goHome()">🗺️ 环游中国 <small>— 儿童地理</small></h1>
+  <div class="nav-btns">
+    <button class="nav-btn" data-page="home" onclick="goPage('home')">🏠 首页</button>
+    <button class="nav-btn" data-page="map" onclick="goPage('map')">🗺️ 探索</button>
+    <button class="nav-btn" data-page="puzzle" onclick="goPage('puzzle')">🧩 拼图</button>
+    <button class="nav-btn" data-page="quiz" onclick="goPage('quiz')">✏️ 答题</button>
+    <button class="nav-btn" data-page="score" onclick="goPage('score')">🏆 积分</button>
+  </div>
+  <div class="score-badge">⭐ <span id="totalScore">0</span></div>
+</div>
+
+<!-- 首页 -->
+<div class="page active" id="pg-home">
+  <div class="hero">
+    <div class="hero-emoji">✈️</div>
+    <h2>环游中国</h2>
+    <p>和我们一起飞遍祖国34个省级行政区！<br>认识壮丽的山河，发现各地的精彩！</p>
+    <div class="hero-btns">
+      <button class="nav-btn" onclick="goPage('map')">🗺️ 开始探索</button>
+      <button class="nav-btn" onclick="goPage('quiz')">✏️ 答题闯关</button>
+    </div>
+  </div>
+  <div class="feature-grid">
+    <div class="feature-card" onclick="goPage('map')">
+      <span class="icon">🗺️</span>
+      <h3>探索地图</h3>
+      <p>点击省份卡片<br>了解各地特色</p>
+    </div>
+    <div class="feature-card" onclick="goPage('puzzle')">
+      <span class="icon">🧩</span>
+      <h3>拼图游戏</h3>
+      <p>把省份拼回<br>中国地图</p>
+    </div>
+    <div class="feature-card" onclick="goPage('quiz')">
+      <span class="icon">✏️</span>
+      <h3>答题闯关</h3>
+      <p>回答地理知识<br>赢取星星</p>
+    </div>
+    <div class="feature-card" onclick="goPage('score')">
+      <span class="icon">🏆</span>
+      <h3>我的积分</h3>
+      <p>查看成就<br>收集徽章</p>
+    </div>
+  </div>
+</div>
+
+<!-- 地图探索页 -->
+<div class="page" id="pg-map">
+  <div class="map-wrap">
+    <div class="map-title">🗺️ 探索中国34省</div>
+    <div class="region-tabs" id="regionTabs"></div>
+    <div class="p-grid" id="provinceGrid"></div>
+  </div>
+</div>
+
+<!-- 省份详情弹窗 -->
+<div class="modal-mask" id="provinceModal">
+  <div class="modal-box">
+    <span class="modal-x" onclick="closeModal()">&times;</span>
+    <span class="modal-emoji" id="mEmoji"></span>
+    <h2 id="mName"></h2>
+    <span class="modal-region" id="mRegion"></span>
+    <div class="info-list">
+      <div class="info-row"><span class="info-label">简称</span><span class="info-val" id="mAbbr"></span></div>
+      <div class="info-row"><span class="info-label">省会</span><span class="info-val" id="mCapital"></span></div>
+      <div class="info-row"><span class="info-label">特色</span><span class="info-val"><span class="tag-wrap" id="mFeatures"></span></span></div>
+    </div>
+    <div class="fun-fact" id="mFact"></div>
+    <button class="btn-visit enabled" id="btnVisit">✅ 打卡此地 +10⭐</button>
+  </div>
+</div>
+
+<!-- 拼图游戏页 -->
+<div class="page" id="pg-puzzle">
+  <div class="pz-wrap">
+    <div class="pz-title">🧩 省份拼图</div>
+    <div class="pz-toolbar">
+      <span style="font-size:.85em;color:#666">难度：</span>
+      <select id="pzDiff">
+        <option value="easy">简单（9块）</option>
+        <option value="medium" selected>中等（18块）</option>
+        <option value="hard">困难（34块）</option>
+      </select>
+      <button onclick="startPuzzle()">🔄 重新开始</button>
+    </div>
+    <div class="pz-board" id="pzBoard"></div>
+    <div class="pz-progress">
+      <span id="pzStatus">把右侧的省份拖到左侧对应位置！</span>
+      <div class="pz-bar"><div class="pz-bar-fill" id="pzBar" style="width:0%"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 答题闯关页 -->
+<div class="page" id="pg-quiz">
+  <div class="qz-wrap" id="qzWrap">
+    <div class="qz-head">
+      <div class="qz-badge" id="qzLevel">第 1 关</div>
+      <div style="font-size:.9em;color:#666">⭐ <span id="qzScore">0</span> 分</div>
+    </div>
+    <div id="qzBody">
+      <div class="qz-q" id="qzQ"></div>
+      <div class="qz-opts" id="qzOpts"></div>
+      <div class="qz-fb" id="qzFb"></div>
+      <button class="qz-next" id="qzNextBtn" onclick="nextQuiz()">下一题 ➡️</button>
+    </div>
+    <div class="qz-result" id="qzResult">
+      <span class="r-emoji">🎉</span>
+      <div style="font-size:1.1em;color:#555;margin:6px 0">闯关完成！</div>
+      <div class="r-score" id="finalScore">0</div>
+      <div style="color:#999;font-size:.85em;margin:4px 0">总分</div>
+      <div class="r-stars" id="finalStars"></div>
+      <button class="qz-next show" onclick="restartQuiz()" style="margin-top:14px">再玩一次 🔄</button>
+    </div>
+  </div>
+</div>
+
+<!-- 积分页 -->
+<div class="page" id="pg-score">
+  <div class="sc-wrap">
+    <div class="sc-card">
+      <h3>⭐ 总积分</h3>
+      <div class="sc-total" id="displayTotal">0</div>
+      <p style="color:#999;font-size:.82em;margin-top:4px">探索省份、完成拼图、答题闯关都能获得积分！</p>
+    </div>
+    <div class="sc-card">
+      <h3>🏅 徽章收集</h3>
+      <div class="badge-grid" id="badgeGrid"></div>
+    </div>
+    <div class="sc-card">
+      <h3>📋 已探索（<span id="visitedCount">0</span>/34）</h3>
+      <div class="v-list" id="visitedList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =================================================================
+   数据：34 省级行政区
+   ================================================================= */
+var PROVINCES = [
+  {name:"北京",abbr:"京",capital:"北京",region:"华北",emoji:"🏛️",features:["天安门","长城","故宫","烤鸭"],fact:"北京是中国的首都，万里长城是世界上最长的城墙，有2000多年历史！"},
+  {name:"天津",abbr:"津",capital:"天津",region:"华北",emoji:"🎡",features:["狗不理包子","天津之眼","相声"],fact:"天津的'狗不理包子'名字很奇怪，其实是因为老板太忙连狗都不理他！"},
+  {name:"河北",abbr:"冀",capital:"石家庄",region:"华北",emoji:"🏞️",features:["承德避暑山庄","坝上草原","山海关"],fact:"河北省环抱着北京和天津，像给它们一个大大的拥抱！"},
+  {name:"山西",abbr:"晋",capital:"太原",region:"华北",emoji:"🏯",features:["平遥古城","云冈石窟","老陈醋"],fact:"山西有中国最多的古建筑，被誉为'中国古代建筑博物馆'！"},
+  {name:"内蒙古",abbr:"蒙",capital:"呼和浩特",region:"华北",emoji:"🐎",features:["呼伦贝尔大草原","蒙古包","骑马"],fact:"内蒙古草原的面积比英国还大，那里可以骑马在草原上奔驰！"},
+  {name:"辽宁",abbr:"辽",capital:"沈阳",region:"东北",emoji:"🏰",features:["沈阳故宫","大连海景","东北炖菜"],fact:"辽宁的沈阳故宫是除北京外，中国唯一现存的皇宫！"},
+  {name:"吉林",abbr:"吉",capital:"长春",region:"东北",emoji:"❄️",features:["长白山天池","雾凇","滑雪"],fact:"冬天吉林的雾凇像童话世界里的冰晶树，晶莹剔透，美极了！"},
+  {name:"黑龙江",abbr:"黑",capital:"哈尔滨",region:"东北",emoji:"🐯",features:["冰雪大世界","中国最北端","东北虎"],fact:"黑龙江省是中国最北的省份，冬天可以看美丽的北极光！"},
+  {name:"上海",abbr:"沪",capital:"上海",region:"华东",emoji:"🏙️",features:["东方明珠","外滩","迪士尼乐园"],fact:"上海迪士尼有世界上最高的迪士尼城堡，比美国的大一倍！"},
+  {name:"江苏",abbr:"苏",capital:"南京",region:"华东",emoji:"🌸",features:["苏州园林","南京夫子庙","盐水鸭"],fact:"苏州园林小巧精致，每一步都是风景，被列为世界文化遗产！"},
+  {name:"浙江",abbr:"浙",capital:"杭州",region:"华东",emoji:"🍵",features:["西湖","义乌小商品","龙井茶"],fact:"杭州西湖的美景曾经让意大利旅行家马可·波罗惊叹不已！"},
+  {name:"安徽",abbr:"皖",capital:"合肥",region:"华东",emoji:"⛰️",features:["黄山","徽派建筑","臭鳜鱼"],fact:"'五岳归来不看山，黄山归来不看岳'，黄山的美无与伦比！"},
+  {name:"福建",abbr:"闽",capital:"福州",region:"华东",emoji:"🏠",features:["福建土楼","武夷山","沙县小吃"],fact:"福建土楼像巨大的圆形堡垒，是客家人智慧的结晶！"},
+  {name:"江西",abbr:"赣",capital:"南昌",region:"华东",emoji:"🏺",features:["庐山","景德镇瓷器","滕王阁"],fact:"景德镇生产瓷器已有1700多年，英文里'瓷器'和'中国'是同一个词！"},
+  {name:"山东",abbr:"鲁",capital:"济南",region:"华东",emoji:"🍺",features:["泰山","孔子故乡","青岛啤酒"],fact:"泰山是五岳之首，古代皇帝都要来这里祭拜天地！"},
+  {name:"河南",abbr:"豫",capital:"郑州",region:"华中",emoji:"🥋",features:["少林寺","龙门石窟","烩面"],fact:"河南是中华文明的发源地之一，洛阳曾经是十三朝古都！"},
+  {name:"湖北",abbr:"鄂",capital:"武汉",region:"华中",emoji:"🌉",features:["黄鹤楼","三峡大坝","热干面"],fact:"武汉长江大桥是新中国在长江上修建的第一座大桥！"},
+  {name:"湖南",abbr:"湘",capital:"长沙",region:"华中",emoji:"🌶️",features:["张家界","岳阳楼","辣椒"],fact:"湖南人爱吃辣，毛主席也说'不吃辣椒不革命'！"},
+  {name:"广东",abbr:"粤",capital:"广州",region:"华南",emoji:"🍜",features:["广州塔","早茶文化","粤语"],fact:"广东人的早茶文化非常丰富，一顿早茶可以吃几十种点心！"},
+  {name:"广西",abbr:"桂",capital:"南宁",region:"华南",emoji:"🛶",features:["桂林山水","壮族歌舞","桂林米粉"],fact:"'桂林山水甲天下'，这里的山水像一幅美丽的中国水墨画！"},
+  {name:"海南",abbr:"琼",capital:"海口",region:"华南",emoji:"🏝️",features:["天涯海角","椰子","三亚海滩"],fact:"海南岛是中国最南的省份，形状像一颗梨挂在中国的靴子上！"},
+  {name:"重庆",abbr:"渝",capital:"重庆",region:"西南",emoji:"🍲",features:["火锅","洪崖洞","轻轨穿楼"],fact:"重庆被称为'山城'，因为城市建在山上，轻轨可以从楼房里穿过！"},
+  {name:"四川",abbr:"川/蜀",capital:"成都",region:"西南",emoji:"🐼",features:["大熊猫","川菜","九寨沟"],fact:"四川是大熊猫的故乡，全球最大的熊猫保护基地就在这里！"},
+  {name:"贵州",abbr:"黔/贵",capital:"贵阳",region:"西南",emoji:"💧",features:["黄果树瀑布","苗族银饰","茅台酒"],fact:"贵州有'公园省'的美称，瀑布、溶洞、峡谷样样齐全！"},
+  {name:"云南",abbr:"云/滇",capital:"昆明",region:"西南",emoji:"🌺",features:["石林","丽江古城","大理"],fact:"云南有26个民族，是中国民族最多的省份！"},
+  {name:"西藏",abbr:"藏",capital:"拉萨",region:"西南",emoji:"🏔️",features:["布达拉宫","珠穆朗玛峰","牦牛"],fact:"珠穆朗玛峰是世界最高峰，高达8848米，在西藏和尼泊尔交界处！"},
+  {name:"陕西",abbr:"陕/秦",capital:"西安",region:"西北",emoji:"🏺",features:["兵马俑","华山","肉夹馍"],fact:"西安兵马俑是2000多年前秦始皇的地下军队，被誉为世界第八大奇迹！"},
+  {name:"甘肃",abbr:"甘/陇",capital:"兰州",region:"西北",emoji:"🎨",features:["莫高窟","兰州拉面","嘉峪关"],fact:"甘肃的莫高窟有上千个洞窟，里面画满了精美的壁画！"},
+  {name:"青海",abbr:"青",capital:"西宁",region:"西北",emoji:"🦌",features:["青海湖","茶卡盐湖","牦牛"],fact:"茶卡盐湖被称为'天空之镜'，湖面像镜子一样倒映着天空！"},
+  {name:"宁夏",abbr:"宁",capital:"银川",region:"西北",emoji:"🏜️",features:["沙坡头","枸杞","回族文化"],fact:"宁夏虽然面积小，却有沙漠、黄河、绿洲三种不同的风景！"},
+  {name:"新疆",abbr:"新",capital:"乌鲁木齐",region:"西北",emoji:"🍇",features:["天山","葡萄沟","大盘鸡"],fact:"新疆占中国六分之一的面积，从乌鲁木齐到北京坐飞机要4小时！"},
+  {name:"香港",abbr:"港",capital:"——",region:"特别行政区",emoji:"🎢",features:["香港迪士尼","紫荆花","太平山顶"],fact:"香港迪士尼有很多独一无二的中国元素，是全球最紧凑的迪士尼！"},
+  {name:"澳门",abbr:"澳",capital:"——",region:"特别行政区",emoji:"🥮",features:["大三巴牌坊","葡式蛋挞","妈阁庙"],fact:"澳门的葡式蛋挞香酥可口，是澳门最受欢迎的小吃！"},
+  {name:"台湾",abbr:"台",capital:"台北",region:"特别行政区",emoji:"🌅",features:["日月潭","阿里山","台北101"],fact:"台湾的日月潭是台湾最大的湖泊，形状像太阳和月亮拼在一起！"}
+];
+
+var REGIONS = ["全部","华北","东北","华东","华中","华南","西南","西北","特别行政区"];
+
+/* =================================================================
+   状态管理（localStorage 持久化）
+   ================================================================= */
+var state = { score:0, visited:[], badges:[] };
+
+function loadState(){
+  try {
+    var s = localStorage.getItem('china_app_state');
+    if(s) {
+      var d = JSON.parse(s);
+      state.score = d.score || 0;
+      state.visited = d.visited || [];
+      state.badges = d.badges || [];
+    }
+  } catch(e){}
+}
+function saveState(){
+  localStorage.setItem('china_app_state', JSON.stringify(state));
+  var el = document.getElementById('totalScore');
+  if(el) el.textContent = state.score;
+}
+
+/* =================================================================
+   页面切换
+   ================================================================= */
+function goPage(id){
+  var pages = document.querySelectorAll('.page');
+  for(var i=0; i<pages.length; i++) pages[i].classList.remove('active');
+  var pg = document.getElementById('pg-'+id);
+  if(pg) pg.classList.add('active');
+  var btns = document.querySelectorAll('.nav-btn');
+  for(var j=0; j<btns.length; j++){
+    btns[j].classList.toggle('active', btns[j].getAttribute('data-page')===id);
+  }
+  if(id==='map')   renderMapTabs();
+  if(id==='score') renderScorePage();
+  if(id==='puzzle') startPuzzle();
+  if(id==='quiz')  initQuiz();
+}
+function goHome(){ goPage('home'); }
+
+/* =================================================================
+   地图探索
+   ================================================================= */
+var currentProvince = null;
+
+function renderMapTabs(){
+  var c = document.getElementById('regionTabs');
+  var html = '';
+  for(var i=0; i<REGIONS.length; i++){
+    var r = REGIONS[i];
+    var cls = (r==='全部') ? 'region-tab active' : 'region-tab';
+    html += '<button class="'+cls+'" onclick="renderMap(\''+r+'\',this)">'+r+'</button>';
+  }
+  c.innerHTML = html;
+  renderMap('全部', c.firstChild);
+}
+
+function renderMap(region, btn){
+  if(btn){
+    var tabs = document.querySelectorAll('.region-tab');
+    for(var i=0; i<tabs.length; i++) tabs[i].classList.remove('active');
+    btn.classList.add('active');
+  }
+  var list;
+  if(region==='全部'){
+    list = PROVINCES;
+  } else {
+    list = [];
+    for(var i=0; i<PROVINCES.length; i++){
+      if(PROVINCES[i].region===region) list.push(PROVINCES[i]);
+    }
+  }
+  var grid = document.getElementById('provinceGrid');
+  var html = '';
+  for(var i=0; i<list.length; i++){
+    var p = list[i];
+    var v = false;
+    for(var j=0; j<state.visited.length; j++){
+      if(state.visited[j]===p.name){ v=true; break; }
+    }
+    var cls = 'p-card' + (v?' visited':'');
+    html += '<div class="'+cls+'" onclick="openProvince(\''+p.name+'\')">' +
+      '<span class="p-emoji">'+p.emoji+'</span>' +
+      '<span class="p-name">'+p.name+'</span>' +
+      '<span class="p-abbr">'+p.abbr+'</span>' +
+      '<span class="p-cap">'+p.capital+'</span>' +
+      '</div>';
+  }
+  grid.innerHTML = html;
+}
+
+function openProvince(name){
+  for(var i=0; i<PROVINCES.length; i++){
+    if(PROVINCES[i].name===name){ currentProvince = PROVINCES[i]; break; }
+  }
+  if(!currentProvince) return;
+  document.getElementById('mEmoji').textContent = currentProvince.emoji;
+  document.getElementById('mName').textContent = currentProvince.name;
+  document.getElementById('mRegion').textContent = currentProvince.region + ' · 省会：' + currentProvince.capital;
+  document.getElementById('mAbbr').textContent = currentProvince.abbr;
+  document.getElementById('mCapital').textContent = currentProvince.capital;
+  var ftags = '';
+  for(var i=0; i<currentProvince.features.length; i++){
+    ftags += '<span class="tag">'+currentProvince.features[i]+'</span>';
+  }
+  document.getElementById('mFeatures').innerHTML = ftags;
+  document.getElementById('mFact').textContent = currentProvince.fact;
+  var v = false;
+  for(var i=0; i<state.visited.length; i++){
+    if(state.visited[i]===currentProvince.name){ v=true; break; }
+  }
+  var btn = document.getElementById('btnVisit');
+  if(v){
+    btn.textContent = '✅ 已打卡';
+    btn.className = 'btn-visit btn-visited';
+    btn.onclick = null;
+  } else {
+    btn.textContent = '✅ 打卡此地 +10⭐';
+    btn.className = 'btn-visit enabled';
+    btn.onclick = doVisit;
+  }
+  document.getElementById('provinceModal').classList.add('show');
+}
+
+function closeModal(){ document.getElementById('provinceModal').classList.remove('show'); }
+
+function doVisit(){
+  if(!currentProvince) return;
+  for(var i=0; i<state.visited.length; i++){
+    if(state.visited[i]===currentProvince.name) return;
+  }
+  state.visited.push(currentProvince.name);
+  addScore(10);
+  checkBadges();
+  closeModal();
+  var activeTab = document.querySelector('.region-tab.active');
+  if(activeTab) renderMap(activeTab.textContent, activeTab);
+}
+
+/* =================================================================
+   拼图游戏
+   ================================================================= */
+var pzPieces = [];
+var pzCorrect = 0;
+var pzTotal = 0;
+
+function startPuzzle(){
+  var diff = document.getElementById('pzDiff').value;
+  var count;
+  if(diff==='easy') count = 9;
+  else if(diff==='medium') count = 18;
+  else count = 34;
+  pzTotal = count;
+  pzCorrect = 0;
+
+  // 随机选省份
+  var pool = [];
+  for(var i=0; i<PROVINCES.length; i++) pool.push(PROVINCES[i]);
+  // 洗牌
+  for(var i=pool.length-1; i>0; i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var tmp = pool[i]; pool[i]=pool[j]; pool[j]=tmp;
+  }
+  pool = pool.slice(0, count);
+  pzPieces = pool;
+
+  var board = document.getElementById('pzBoard');
+  var cols;
+  if(count<=9) cols=3;
+  else if(count<=18) cols=6;
+  else cols=6;
+  board.style.gridTemplateColumns = 'repeat('+cols+',1fr)';
+
+  // 创建槽位
+  var slotsHtml = '';
+  for(var i=0; i<pool.length; i++){
+    slotsHtml += '<div class="pz-slot" data-name="'+pool[i].name+'" id="slot-'+i+'">?</div>';
+  }
+  // 碎片（打乱）
+  var pieces = [];
+  for(var i=0; i<pool.length; i++) pieces.push(pool[i]);
+  for(var i=pieces.length-1; i>0; i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var tmp = pieces[i]; pieces[i]=pieces[j]; pieces[j]=tmp;
+  }
+  var trayHtml = '<div class="pz-tray">';
+  for(var i=0; i<pieces.length; i++){
+    trayHtml += '<div class="pz-piece" draggable="true" data-name="'+pieces[i].name+'" id="piece-'+i+'">'+pieces[i].name+'</div>';
+  }
+  trayHtml += '</div>';
+
+  board.innerHTML = slotsHtml + trayHtml;
+
+  // 绑定拖放事件
+  for(var i=0; i<pool.length; i++){
+    (function(idx){
+      var slot = document.getElementById('slot-'+idx);
+      slot.addEventListener('dragover', function(e){ e.preventDefault(); this.classList.add('over'); });
+      slot.addEventListener('dragleave', function(){ this.classList.remove('over'); });
+      slot.addEventListener('drop', function(e){
+        e.preventDefault();
+        this.classList.remove('over');
+        var name = e.dataTransfer.getData('text/plain');
+        checkPuzzleDrop(this, name);
+      });
+    })(i);
+  }
+  for(var i=0; i<pieces.length; i++){
+    (function(idx){
+      var piece = document.getElementById('piece-'+idx);
+      piece.addEventListener('dragstart', function(e){
+        e.dataTransfer.setData('text/plain', pieces[idx].name);
+      });
+    })(i);
+  }
+
+  updatePuzzleProgress();
+}
+
+function checkPuzzleDrop(slot, name){
+  if(slot.classList.contains('filled') || !slot.dataset.name) return;
+  if(slot.dataset.name === name){
+    slot.classList.add('filled');
+    slot.textContent = name;
+    slot.style.background = 'linear-gradient(135deg,#c8e6c9,#a5d6a7)';
+    slot.style.borderColor = '#43a047';
+    slot.style.color = '#1b5e20';
+    slot.style.fontWeight = 'bold';
+    slot.style.textAlign = 'center';
+    slot.style.padding = '6px 2px';
+    pzCorrect++;
+    addScore(5);
+    updatePuzzleProgress();
+    // 隐藏对应碎片
+    var allPieces = document.querySelectorAll('.pz-piece');
+    for(var i=0; i<allPieces.length; i++){
+      if(allPieces[i].dataset.name===name && allPieces[i].style.display!=='none'){
+        allPieces[i].style.display = 'none';
+      }
+    }
+    if(pzCorrect===pzTotal){
+      document.getElementById('pzStatus').innerHTML = '🎉 <b>拼图完成！</b>';
+      addScore(20);
+      checkBadges();
+    }
+  } else {
+    document.getElementById('pzStatus').textContent = '❌ 不对哦，再试试！';
+    slot.style.borderColor = '#e53935';
+    var el = slot;
+    setTimeout(function(){
+      el.style.borderColor = '#bdbdbd';
+      document.getElementById('pzStatus').textContent = '把右侧的省份拖到左侧对应位置！';
+    }, 1000);
+  }
+}
+
+function updatePuzzleProgress(){
+  var pct = pzTotal ? Math.round(pzCorrect / pzTotal * 100) : 0;
+  document.getElementById('pzBar').style.width = pct + '%';
+  document.getElementById('pzStatus').innerHTML =
+    (pct < 100) ? '进度：' + pzCorrect + ' / ' + pzTotal : '🎉 <b>拼图完成！</b>';
+}
+
+/* =================================================================
+   答题闯关
+   ================================================================= */
+var quizQs = [];
+var quizIdx = 0;
+var quizAnswered = false;
+
+function initQuiz(){
+  quizIdx = 0;
+  quizAnswered = false;
+  state.quizScore = 0;
+  document.getElementById('qzScore').textContent = '0';
+  document.getElementById('qzBody').style.display = '';
+  document.getElementById('qzResult').classList.remove('show');
+  quizQs = genQuiz();
+  renderQuiz();
+}
+
+function genQuiz(){
+  var qs = [];
+  var used = {};
+  var pool = [];
+  for(var i=0; i<PROVINCES.length; i++) pool.push(PROVINCES[i]);
+  for(var i=pool.length-1; i>0; i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var tmp = pool[i]; pool[i]=pool[j]; pool[j]=tmp;
+  }
+  var pi = 0;
+  while(qs.length < 10 && pi < pool.length){
+    var p = pool[pi++];
+    if(used[p.name]) continue;
+    used[p.name] = true;
+    var type = ['capital','abbr','region','emoji'][Math.floor(Math.random()*4)];
+    var q, choices, answer;
+
+    if(type === 'capital'){
+      q = '"' + p.name + '"的省会是？';
+      choices = [p.capital];
+      while(choices.length < 4){
+        var c = PROVINCES[Math.floor(Math.random()*PROVINCES.length)].capital;
+        var dup = false; for(var k=0;k<choices.length;k++){if(choices[k]===c){dup=true;break;}} if(!dup) choices.push(c);
+      }
+      answer = 0;
+      for(var k=0;k<choices.length;k++){if(choices[k]===p.capital){answer=k;break;}}
+    } else if(type === 'abbr'){
+      q = '"' + p.name + '"的简称是？';
+      choices = [p.abbr];
+      while(choices.length < 4){
+        var c2 = PROVINCES[Math.floor(Math.random()*PROVINCES.length)].abbr;
+        var dup = false; for(var k=0;k<choices.length;k++){if(choices[k]===c2){dup=true;break;}} if(!dup) choices.push(c2);
+      }
+      answer = 0;
+      for(var k=0;k<choices.length;k++){if(choices[k]===p.abbr){answer=k;break;}}
+    } else if(type === 'region'){
+      q = '"' + p.name + '"属于哪个地区？';
+      choices = [p.region];
+      var others = [];
+      for(var r=0;r<REGIONS.length;r++){
+        if(REGIONS[r]!=='全部' && REGIONS[r]!==p.region) others.push(REGIONS[r]);
+      }
+      while(choices.length < 4 && others.length > 0){
+        var ri = Math.floor(Math.random()*others.length);
+        choices.push(others[ri]);
+        others.splice(ri, 1);
+      }
+      answer = 0;
+      for(var k=0;k<choices.length;k++){if(choices[k]===p.region){answer=k;break;}}
+    } else {
+      q = '这个 emoji 代表哪个省？' + p.emoji;
+      choices = [p.name];
+      while(choices.length < 4){
+        var c3 = PROVINCES[Math.floor(Math.random()*PROVINCES.length)].name;
+        var dup = false; for(var k=0;k<choices.length;k++){if(choices[k]===c3){dup=true;break;}} if(!dup) choices.push(c3);
+      }
+      answer = 0;
+      for(var k=0;k<choices.length;k++){if(choices[k]===p.name){answer=k;break;}}
+    }
+
+    // 打乱选项
+    var zipped = [];
+    for(var k=0;k<choices.length;k++) zipped.push([choices[k], k===answer]);
+    for(var k=zipped.length-1;k>0;k--){
+      var l = Math.floor(Math.random()*(k+1));
+      var tmp2 = zipped[k]; zipped[k]=zipped[l]; zipped[l]=tmp2;
+    }
+    var newChoices = [];
+    var newAnswer = -1;
+    for(var k=0;k<zipped.length;k++){
+      newChoices.push(zipped[k][0]);
+      if(zipped[k][1]) newAnswer = k;
+    }
+    qs.push({ q:q, choices:newChoices, answer:newAnswer });
+  }
+  return qs;
+}
+
+function renderQuiz(){
+  if(quizIdx >= quizQs.length){ showQuizResult(); return; }
+  quizAnswered = false;
+  document.getElementById('qzLevel').textContent = '第 ' + (quizIdx+1) + ' 关';
+  var q = quizQs[quizIdx];
+  document.getElementById('qzQ').textContent = q.q;
+  var optsHtml = '';
+  for(var i=0; i<q.choices.length; i++){
+    optsHtml += '<div class="qz-opt" onclick="answerQuiz('+i+')">' + String.fromCharCode(65+i) + '. ' + q.choices[i] + '</div>';
+  }
+  document.getElementById('qzOpts').innerHTML = optsHtml;
+  var fb = document.getElementById('qzFb');
+  fb.className = 'qz-fb';
+  fb.textContent = '';
+  fb.style.display = 'none';
+  document.getElementById('qzNextBtn').classList.remove('show');
+}
+
+function answerQuiz(idx){
+  if(quizAnswered) return;
+  quizAnswered = true;
+  var q = quizQs[quizIdx];
+  var opts = document.querySelectorAll('.qz-opt');
+  for(var i=0; i<opts.length; i++){
+    opts[i].style.pointerEvents = 'none';
+    if(i === q.answer) opts[i].classList.add('ok');
+    else if(i === idx) opts[i].classList.add('no');
+  }
+  var fb = document.getElementById('qzFb');
+  fb.style.display = 'block';
+  if(idx === q.answer){
+    fb.textContent = '🎉 回答正确！ +10⭐';
+    fb.className = 'qz-fb show ok-fb';
+    state.quizScore += 10;
+    addScore(10);
+  } else {
+    fb.textContent = '😅 答错了，正确答案是：' + q.choices[q.answer];
+    fb.className = 'qz-fb show no-fb';
+  }
+  document.getElementById('qzScore').textContent = state.quizScore;
+  document.getElementById('qzNextBtn').classList.add('show');
+}
+
+function nextQuiz(){ quizIdx++; renderQuiz(); }
+
+function showQuizResult(){
+  document.getElementById('qzBody').style.display = 'none';
+  document.getElementById('qzResult').classList.add('show');
+  document.getElementById('finalScore').textContent = state.quizScore + ' ⭐';
+  var stars = Math.min(5, Math.max(1, Math.ceil(state.quizScore / 20)));
+  var starStr = '';
+  for(var i=0;i<stars;i++) starStr += '⭐';
+  for(var i=stars;i<5;i++) starStr += '☆';
+  document.getElementById('finalStars').textContent = starStr;
+  if(stars >= 3) addScore(15);
+  checkBadges();
+}
+
+function restartQuiz(){ initQuiz(); }
+
+/* =================================================================
+   积分 & 徽章
+   ================================================================= */
+function addScore(n){
+  state.score += n;
+  saveState();
+}
+
+function checkBadges(){
+  var b = state.badges;
+  var has = function(arr, v){ for(var i=0;i<arr.length;i++) if(arr[i]===v) return true; return false; };
+  if(state.visited.length >= 1  && !has(b,'first'))  b.push('first');
+  if(state.visited.length >= 10 && !has(b,'explorer')) b.push('explorer');
+  if(state.visited.length >= 34 && !has(b,'all'))     b.push('all');
+  if(state.score >= 100  && !has(b,'score100')) b.push('score100');
+  if(state.score >= 500  && !has(b,'score500')) b.push('score500');
+  saveState();
+}
+
+var BADGE_DEFS = {
+  first:   {emoji:'🌟', name:'初次探索'},
+  explorer: {emoji:'🗺️', name:'探索十省'},
+  all:     {emoji:'🏆', name:'走遍中国'},
+  score100: {emoji:'⭐', name:'百分达人'},
+  score500: {emoji:'👑', name:'地理王者'}
+};
+
+function renderScorePage(){
+  document.getElementById('displayTotal').textContent = state.score;
+  document.getElementById('visitedCount').textContent = state.visited.length;
+
+  var grid = document.getElementById('badgeGrid');
+  var html = '';
+  var keys = Object.keys(BADGE_DEFS);
+  for(var i=0; i<keys.length; i++){
+    var id = keys[i];
+    var ok = false;
+    for(var j=0;j<state.badges.length;j++){ if(state.badges[j]===id){ok=true;break;} }
+    html += '<div class="badge'+(ok?' ok':' locked')+'">' +
+      (ok ? BADGE_DEFS[id].emoji : '🔒') +
+      '<div class="btip">'+BADGE_DEFS[id].name+'</div></div>';
+  }
+  grid.innerHTML = html;
+
+  var list = document.getElementById('visitedList');
+  if(state.visited.length === 0){
+    list.innerHTML = '<div class="empty-tip">还没有探索任何省份<br>快去 🗺️ 探索地图 看看吧！</div>';
+  } else {
+    var vhtml = '';
+    for(var i=0; i<state.visited.length; i++){
+      var pname = state.visited[i];
+      var pemoji = '📍';
+      for(var j=0;j<PROVINCES.length;j++){ if(PROVINCES[j].name===pname){pemoji=PROVINCES[j].emoji;break;} }
+      vhtml += '<div class="v-item"><span>'+pemoji+' '+pname+'</span><span style="color:#ff6f00">+10⭐</span></div>';
+    }
+    list.innerHTML = vhtml;
+  }
+}
+
+/* =================================================================
+   初始化
+   ================================================================= */
+loadState();
+saveState();
+</script>
+</body>
+</html>

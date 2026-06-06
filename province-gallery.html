@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>环游中国 - 省份图片探索</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    background: #0a1628;
+    color: #fff;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* 顶部标题 */
+  .header {
+    text-align: center;
+    padding: 30px 20px 10px;
+  }
+
+  .header h1 {
+    font-size: 42px;
+    background: linear-gradient(135deg, #FFD54F, #FF9800, #FF5722);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+    letter-spacing: 4px;
+  }
+
+  .header p {
+    color: #90CAF9;
+    font-size: 18px;
+  }
+
+  .back-link {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 8px 24px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-radius: 30px;
+    color: #B0BEC5;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.3s;
+  }
+
+  .back-link:hover {
+    border-color: #FFD54F;
+    color: #FFD54F;
+  }
+
+  /* 地区Tab */
+  .region-tabs {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .region-tab {
+    padding: 10px 22px;
+    border-radius: 30px;
+    border: 2px solid rgba(255,255,255,0.2);
+    background: transparent;
+    color: #B0BEC5;
+    cursor: pointer;
+    font-size: 15px;
+    transition: all 0.3s;
+  }
+
+  .region-tab.active {
+    border-color: #FFD54F;
+    color: #FFD54F;
+    background: rgba(255,213,79,0.15);
+    font-weight: bold;
+  }
+
+  .region-tab:hover {
+    border-color: #FFD54F;
+    color: #FFD54F;
+  }
+
+  /* 省份网格 */
+  .province-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+    padding: 10px 20px 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .province-card {
+    background: rgba(255,255,255,0.05);
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .province-card:hover {
+    border-color: #FFD54F;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(255,213,79,0.15);
+  }
+
+  .province-card .p-emoji { font-size: 40px; display: block; margin-bottom: 8px; }
+  .province-card .p-avatar { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 8px; border: 2px solid rgba(255,213,79,0.5); background: rgba(0,0,0,0.3); }
+  .province-card .p-name { font-size: 18px; font-weight: bold; color: #fff; }
+  .province-card .p-count { font-size: 12px; color: #90CAF9; margin-top: 6px; }
+
+  /* 图片模态框 */
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.92);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+  }
+
+  .modal-overlay.active { display: flex; }
+
+  .modal-content {
+    width: 92%;
+    max-width: 1100px;
+    background: #0f1f3a;
+    border-radius: 24px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: 92vh;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .modal-header {
+    padding: 18px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .modal-header h2 {
+    margin: 0;
+    color: #FFD54F;
+    font-size: 24px;
+  }
+
+  .modal-close {
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    transition: all 0.3s;
+  }
+
+  .modal-close:hover { background: rgba(255,87,34,0.5); }
+
+  .modal-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .modal-image-area {
+    flex: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    position: relative;
+    min-height: 400px;
+  }
+
+  .modal-image-area img {
+    max-width: 100%;
+    max-height: 58vh;
+    object-fit: contain;
+    transition: opacity 0.3s;
+  }
+
+  .modal-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.6);
+    border: 2px solid rgba(255,255,255,0.3);
+    color: #fff;
+    font-size: 20px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-nav:hover { background: rgba(255,213,79,0.3); border-color: #FFD54F; }
+  .modal-nav.prev { left: 16px; }
+  .modal-nav.next { right: 16px; }
+
+  .modal-info {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+    min-width: 260px;
+  }
+
+  .modal-info h3 {
+    color: #FFD54F;
+    margin-bottom: 12px;
+    font-size: 20px;
+  }
+
+  .modal-info .info-line {
+    color: #B0BEC5;
+    line-height: 2;
+    font-size: 15px;
+  }
+
+  .modal-info .info-line strong { color: #fff; }
+
+  .modal-caption {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.8));
+    padding: 30px 20px 16px;
+    text-align: center;
+    color: #FFD54F;
+    font-size: 16px;
+    font-weight: bold;
+  }
+
+  .modal-thumbs {
+    display: flex;
+    gap: 10px;
+    padding: 14px 20px;
+    overflow-x: auto;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    background: rgba(0,0,0,0.3);
+  }
+
+  .modal-thumb {
+    width: 64px;
+    height: 64px;
+    border-radius: 8px;
+    object-fit: cover;
+    cursor: pointer;
+    border: 2px solid transparent;
+    opacity: 0.5;
+    transition: all 0.3s;
+    flex-shrink: 0;
+  }
+
+  .modal-thumb.active { border-color: #FFD54F; opacity: 1; }
+  .modal-thumb:hover { opacity: 0.8; }
+  .modal-thumb.png-thumb { border-radius: 50%; border: 2px dashed rgba(255,213,79,0.4); }
+
+  /* 响应式 */
+  @media (max-width: 768px) {
+    .modal-body { flex-direction: column; }
+    .modal-info { min-width: auto; padding: 16px; }
+    .modal-image-area { min-height: 250px; }
+    .province-grid { grid-template-columns: repeat(3, 1fr); padding: 10px; }
+    .header h1 { font-size: 28px; }
+  }
+
+  /* 背景星星装饰 */
+  .bg-stars {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: -1;
+    overflow: hidden;
+  }
+
+  .bg-star {
+    position: absolute;
+    width: 2px; height: 2px;
+    background: #fff;
+    border-radius: 50%;
+    animation: twinkle 3s ease-in-out infinite;
+  }
+
+  @keyframes twinkle { 0%,100%{ opacity: 0.2; } 50%{ opacity: 1; } }
+
+  .image-counter {
+    position: absolute;
+    top: 16px; right: 16px;
+    background: rgba(0,0,0,0.5);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    color: #B0BEC5;
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-stars" id="bgStars"></div>
+
+<div class="header">
+  <h1>📷 环游中国 · 省份图片探索</h1>
+  <p>点击省份卡片，查看真实风景、美食与文化</p>
+  <a href="interactive-courseware.html" class="back-link">⬅️ 返回互动课件</a>
+</div>
+
+<div class="region-tabs" id="regionTabs"></div>
+<div class="province-grid" id="provinceGrid"></div>
+
+<!-- 图片模态框 -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h2 id="modalTitle">省份名称</h2>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-image-area">
+        <button class="modal-nav prev" onclick="prevImage()">&#10094;</button>
+        <img id="modalImage" src="" alt="">
+        <div class="modal-caption" id="modalCaption">图片说明</div>
+        <div class="image-counter" id="imageCounter">1 / 3</div>
+        <button class="modal-nav next" onclick="nextImage()">&#10095;</button>
+      </div>
+      <div class="modal-info">
+        <h3 id="modalInfoTitle">省份信息</h3>
+        <div class="info-line" id="modalInfoText"></div>
+      </div>
+    </div>
+    <div class="modal-thumbs" id="modalThumbs"></div>
+  </div>
+</div>
+
+<script>
+// ========== 省份图片数据 ==========
+const provinceData = {
+  huabei: {
+    name: '华北地区',
+    provinces: {
+      '北京': {
+        emoji: '🏛️', abbr: '京', capital: '北京',
+        feature: '天安门、长城、故宫、烤鸭',
+        avatar: 'png-images/image6.png',
+        images: [
+          { file: 'image4.jpg', caption: '天安门广场' },
+          { file: 'image5.jpg', caption: '北京烤鸭' },
+          { file: 'image6.jpg', caption: '京剧艺术' }
+        ],
+        pngImages: [
+          { file: 'image6.png', caption: '北京欢迎您' }
+        ]
+      },
+      '天津': {
+        emoji: '🎡', abbr: '津', capital: '天津',
+        feature: '狗不理包子、天津眼、相声',
+        avatar: 'png-images/image7.png',
+        images: [
+          { file: 'image7.jpg', caption: '天津古文化街' },
+          { file: 'image8.jpg', caption: '狗不理包子' },
+          { file: 'image9.jpg', caption: '泥人张彩塑' }
+        ],
+        pngImages: [
+          { file: 'image7.png', caption: '天津相声' }
+        ]
+      },
+      '河北': {
+        emoji: '🏰', abbr: '冀', capital: '石家庄',
+        feature: '承德避暑山庄、秦皇岛、赵州桥',
+        avatar: 'png-images/image9.png',
+        images: [
+          { file: 'image10.jpg', caption: '承德避暑山庄' },
+          { file: 'image11.jpg', caption: '白洋淀荷花' },
+          { file: 'image12.jpg', caption: '赵州桥' }
+        ],
+        pngImages: [
+          { file: 'image9.png', caption: '河北好汉' }
+        ]
+      },
+      '山西': {
+        emoji: '⛩️', abbr: '晋', capital: '太原',
+        feature: '平遥古城、云冈石窟、老陈醋',
+        avatar: 'png-images/image10.png',
+        images: [
+          { file: 'image13.jpg', caption: '平遥古城' },
+          { file: 'image14.jpg', caption: '云冈石窟' }
+        ],
+        pngImages: [
+          { file: 'image10.png', caption: '山西老陈醋' },
+          { file: 'image26.png', caption: '山西刀削面' }
+        ]
+      },
+      '内蒙古': {
+        emoji: '🐎', abbr: '蒙', capital: '呼和浩特',
+        feature: '大草原、蒙古包、骑马、摔跤',
+        avatar: 'png-images/image8.png',
+        images: [
+          { file: 'image15.jpg', caption: '内蒙古大草原' },
+          { file: 'image16.jpg', caption: '蒙古族摔跤' }
+        ],
+        pngImages: [
+          { file: 'image8.png', caption: '内蒙古马头琴' }
+        ]
+      }
+    }
+  },
+  dongbei: {
+    name: '东北地区',
+    provinces: {
+      '辽宁': {
+        emoji: '❄️', abbr: '辽', capital: '沈阳',
+        feature: '沈阳故宫、大连海滨',
+        avatar: 'png-images/image51.png',
+        images: [
+          { file: 'image19.jpg', caption: '沈阳故宫' },
+          { file: 'image20.jpg', caption: '小鸡炖蘑菇' }
+        ],
+        pngImages: [
+          { file: 'image51.png', caption: '辽宁烤串' }
+        ]
+      },
+      '吉林': {
+        emoji: '⛄', abbr: '吉', capital: '长春',
+        feature: '长白山、雾凇、滑雪',
+        avatar: 'png-images/image52.png',
+        images: [
+          { file: 'image21.jpg', caption: '伪满皇宫' },
+          { file: 'image22.jpg', caption: '长白山天池' },
+          { file: 'image28.jpg', caption: '朝鲜族舞蹈' }
+        ],
+        pngImages: [
+          { file: 'image52.png', caption: '吉林二人转' }
+        ]
+      },
+      '黑龙江': {
+        emoji: '🧊', abbr: '黑', capital: '哈尔滨',
+        feature: '冰雪大世界、中央大街、红肠',
+        avatar: 'png-images/image53.png',
+        images: [
+          { file: 'image23.jpg', caption: '朝鲜冷面' },
+          { file: 'image24.jpg', caption: '哈尔滨红肠' },
+          { file: 'image25.jpg', caption: '冰雪大世界' },
+          { file: 'image26.jpg', caption: '漠河极光' },
+          { file: 'image27.jpg', caption: '东北二人转' }
+        ],
+        pngImages: [
+          { file: 'image53.png', caption: '黑龙江寒冬' }
+        ]
+      }
+    }
+  },
+  huadong: {
+    name: '华东地区',
+    provinces: {
+      '上海': {
+        emoji: '🗼', abbr: '沪', capital: '上海',
+        feature: '东方明珠、外滩、迪士尼',
+        avatar: 'png-images/image83.png',
+        images: [
+          { file: 'image31.jpg', caption: '上海外滩' }
+        ],
+        pngImages: [
+          { file: 'image83.png', caption: '上海旗袍' }
+        ]
+      },
+      '江苏': {
+        emoji: '🌸', abbr: '苏', capital: '南京',
+        feature: '苏州园林、南京夫子庙',
+        avatar: 'png-images/image85.png',
+        images: [
+          { file: 'image33.jpg', caption: '苏州园林' }
+        ],
+        pngImages: [
+          { file: 'image85.png', caption: '江苏昆曲' }
+        ]
+      },
+      '浙江': {
+        emoji: '🍵', abbr: '浙', capital: '杭州',
+        feature: '西湖、龙井茶、钱塘江',
+        avatar: 'png-images/image84.png',
+        images: [
+          { file: 'image32.jpg', caption: '杭州西湖' },
+          { file: 'image34.jpg', caption: '东坡肉' }
+        ],
+        pngImages: [
+          { file: 'image84.png', caption: '浙江采茶女' }
+        ]
+      },
+      '安徽': {
+        emoji: '🏔️', abbr: '皖', capital: '合肥',
+        feature: '黄山、徽派建筑',
+        avatar: 'png-images/image86.png',
+        images: [
+          { file: 'image37.jpg', caption: '黄山' }
+        ],
+        pngImages: [
+          { file: 'image86.png', caption: '安徽文房四宝' }
+        ]
+      },
+      '福建': {
+        emoji: '🍵', abbr: '闽', capital: '福州',
+        feature: '武夷山、土楼、铁观音',
+        avatar: 'png-images/image87.png',
+        images: [
+          { file: 'image38.jpg', caption: '福建土楼' },
+          { file: 'image39.jpg', caption: '佛跳墙' },
+          { file: 'image40.jpg', caption: '武夷山' }
+        ],
+        pngImages: [
+          { file: 'image87.png', caption: '福建茶文化' },
+          { file: 'image108.png', caption: '福建小吃' }
+        ]
+      },
+      '江西': {
+        emoji: '🐒', abbr: '赣', capital: '南昌',
+        feature: '庐山、井冈山、景德镇',
+        avatar: 'png-images/image88.png',
+        images: [
+          { file: 'image41.jpg', caption: '滕王阁' },
+          { file: 'image42.jpg', caption: '景德镇瓷器' }
+        ],
+        pngImages: [
+          { file: 'image88.png', caption: '江西才子' }
+        ]
+      },
+      '山东': {
+        emoji: '🏔️', abbr: '鲁', capital: '济南',
+        feature: '泰山、孔子故里、青岛啤酒',
+        avatar: 'png-images/image89.png',
+        images: [
+          { file: 'image35.jpg', caption: '泰山' },
+          { file: 'image36.jpg', caption: '孔庙' }
+        ],
+        pngImages: [
+          { file: 'image89.png', caption: '山东大葱' }
+        ]
+      }
+    }
+  },
+  huazhong: {
+    name: '华中地区',
+    provinces: {
+      '河南': {
+        emoji: '🥋', abbr: '豫', capital: '郑州',
+        feature: '少林寺、龙门石窟、烩面',
+        avatar: 'png-images/image141.png',
+        images: [
+          { file: 'image49.jpg', caption: '少林寺' },
+          { file: 'image50.jpg', caption: '龙门石窟' }
+        ],
+        pngImages: [
+          { file: 'image141.png', caption: '河南功夫' },
+          { file: 'image154.png', caption: '唐三彩' }
+        ]
+      },
+      '湖北': {
+        emoji: '🌉', abbr: '鄂', capital: '武汉',
+        feature: '黄鹤楼、武汉热干面、武当山',
+        avatar: 'png-images/image139.png',
+        images: [
+          { file: 'image51.jpg', caption: '黄鹤楼' },
+          { file: 'image52.jpg', caption: '武当山' },
+          { file: 'image53.jpg', caption: '三峡大坝' },
+          { file: 'image54.jpg', caption: '武汉热干面' }
+        ],
+        pngImages: [
+          { file: 'image139.png', caption: '湖北钓鱼' }
+        ]
+      },
+      '湖南': {
+        emoji: '🐼', abbr: '湘', capital: '长沙',
+        feature: '张家界、臭豆腐、辣椒',
+        avatar: 'png-images/image140.png',
+        images: [
+          { file: 'image55.jpg', caption: '岳阳楼' },
+          { file: 'image56.jpg', caption: '凤凰古城' },
+          { file: 'image57.jpg', caption: '张家界' }
+        ],
+        pngImages: [
+          { file: 'image140.png', caption: '湖南辣椒' }
+        ]
+      }
+    }
+  },
+  huanan: {
+    name: '华南地区',
+    provinces: {
+      '广东': {
+        emoji: '🗼', abbr: '粤', capital: '广州',
+        feature: '小蛮腰、早茶、粤语',
+        avatar: 'png-images/image175.png',
+        images: [
+          { file: 'image60.jpg', caption: '开平碉楼' },
+          { file: 'image61.jpg', caption: '功夫茶' }
+        ],
+        pngImages: [
+          { file: 'image175.png', caption: '广东靓仔' }
+        ]
+      },
+      '广西': {
+        emoji: '🏝️', abbr: '桂', capital: '南宁',
+        feature: '桂林山水、北海银滩',
+        avatar: 'png-images/image176.png',
+        images: [
+          { file: 'image63.jpg', caption: '桂林山水' },
+          { file: 'image64.jpg', caption: '德天瀑布' },
+          { file: 'image65.jpg', caption: '刘三姐' }
+        ],
+        pngImages: [
+          { file: 'image176.png', caption: '广西米粉' }
+        ]
+      },
+      '海南': {
+        emoji: '🏖️', abbr: '琼', capital: '海口',
+        feature: '三亚海滩、椰子、热带水果',
+        avatar: 'png-images/image172.png',
+        images: [
+          { file: 'image62.jpg', caption: '三亚海滩' }
+        ],
+        pngImages: [
+          { file: 'image172.png', caption: '海南椰子' }
+        ]
+      }
+    }
+  },
+  xinan: {
+    name: '西南地区',
+    provinces: {
+      '重庆': {
+        emoji: '🌶️', abbr: '渝', capital: '重庆',
+        feature: '火锅、洪崖洞、轻轨穿楼',
+        avatar: 'png-images/image213.png',
+        images: [
+          { file: 'image73.jpg', caption: '重庆火锅' },
+          { file: 'image74.jpg', caption: '铜梁龙舞' }
+        ],
+        pngImages: [
+          { file: 'image213.png', caption: '重庆火锅妹' }
+        ]
+      },
+      '四川': {
+        emoji: '🐼', abbr: '川/蜀', capital: '成都',
+        feature: '大熊猫、火锅、九寨沟',
+        avatar: 'png-images/image214.png',
+        images: [
+          { file: 'image75.jpg', caption: '九寨沟' },
+          { file: 'image76.jpg', caption: '川剧变脸' }
+        ],
+        pngImages: [
+          { file: 'image214.png', caption: '四川熊猫' },
+          { file: 'image230.png', caption: '乐山大佛' },
+          { file: 'image231.png', caption: '三星堆' }
+        ]
+      },
+      '贵州': {
+        emoji: '💧', abbr: '黔/贵', capital: '贵阳',
+        feature: '黄果树瀑布、茅台酒',
+        avatar: 'png-images/image215.png',
+        images: [
+          { file: 'image77.jpg', caption: '黄果树瀑布' }
+        ],
+        pngImages: [
+          { file: 'image215.png', caption: '贵州苗族' }
+        ]
+      },
+      '云南': {
+        emoji: '🌺', abbr: '云/滇', capital: '昆明',
+        feature: '大理、丽江、西双版纳',
+        avatar: 'png-images/image216.png',
+        images: [
+          { file: 'image78.jpg', caption: '丽江古城' },
+          { file: 'image79.jpg', caption: '过桥米线' },
+          { file: 'image80.jpg', caption: '泼水节' }
+        ],
+        pngImages: [
+          { file: 'image216.png', caption: '云南少数民族' }
+        ]
+      },
+      '西藏': {
+        emoji: '🏔️', abbr: '藏', capital: '拉萨',
+        feature: '布达拉宫、珠穆朗玛峰',
+        avatar: 'png-images/image217.png',
+        images: [
+          { file: 'image81.jpg', caption: '布达拉宫' },
+          { file: 'image82.jpg', caption: '珠穆朗玛峰' },
+          { file: 'image83.jpg', caption: '糌粑' },
+          { file: 'image84.jpg', caption: '献哈达' }
+        ],
+        pngImages: [
+          { file: 'image217.png', caption: '西藏藏族' }
+        ]
+      }
+    }
+  },
+  xibei: {
+    name: '西北地区',
+    provinces: {
+      '陕西': {
+        emoji: '🏯', abbr: '陕/秦', capital: '西安',
+        feature: '兵马俑、华山、肉夹馍',
+        avatar: 'png-images/image256.png',
+        images: [
+          { file: 'image87.jpg', caption: '兵马俑' },
+          { file: 'image88.jpg', caption: '羊肉泡馍' },
+          { file: 'image89.jpg', caption: '安塞腰鼓' }
+        ],
+        pngImages: [
+          { file: 'image256.png', caption: '陕西面食' },
+          { file: 'image25.png', caption: '陕西肉夹馍' }
+        ]
+      },
+      '甘肃': {
+        emoji: '🏜️', abbr: '甘/陇', capital: '兰州',
+        feature: '敦煌莫高窟、兰州拉面',
+        avatar: 'png-images/image257.png',
+        images: [
+          { file: 'image90.jpg', caption: '敦煌莫高窟' },
+          { file: 'image91.jpg', caption: '兰州拉面' }
+        ],
+        pngImages: [
+          { file: 'image257.png', caption: '甘肃飞天' }
+        ]
+      },
+      '青海': {
+        emoji: '🌊', abbr: '青', capital: '西宁',
+        feature: '青海湖、茶卡盐湖',
+        avatar: 'png-images/image259.png',
+        images: [
+          { file: 'image92.jpg', caption: '茶卡盐湖' },
+          { file: 'image93.jpg', caption: '青海酿皮' }
+        ],
+        pngImages: [
+          { file: 'image259.png', caption: '青海牧民' },
+          { file: 'image273.png', caption: '青海湖风光' }
+        ]
+      },
+      '宁夏': {
+        emoji: '🕌', abbr: '宁', capital: '银川',
+        feature: '西夏王陵、枸杞',
+        avatar: 'png-images/image258.png',
+        images: [
+          { file: 'image94.jpg', caption: '西夏王陵' },
+          { file: 'image95.jpg', caption: '沙坡头沙漠' },
+          { file: 'image96.jpg', caption: '宁夏枸杞' }
+        ],
+        pngImages: [
+          { file: 'image258.png', caption: '宁夏回族' }
+        ]
+      },
+      '新疆': {
+        emoji: '🍇', abbr: '新', capital: '乌鲁木齐',
+        feature: '吐鲁番葡萄、天山、烤羊肉',
+        avatar: 'png-images/image255.png',
+        images: [
+          { file: 'image97.jpg', caption: '吐鲁番葡萄' },
+          { file: 'image98.jpg', caption: '火焰山' }
+        ],
+        pngImages: [
+          { file: 'image255.png', caption: '新疆舞蹈' },
+          { file: 'image274.png', caption: '新疆哈密瓜' }
+        ]
+      }
+    }
+  },
+  gangao: {
+    name: '港澳台',
+    provinces: {
+      '台湾': {
+        emoji: '🏔️', abbr: '台', capital: '台北',
+        feature: '日月潭、阿里山、珍珠奶茶',
+        avatar: 'png-images/image90.png',
+        images: [
+          { file: 'image43.jpg', caption: '阿里山' },
+          { file: 'image44.jpg', caption: '日月潭' },
+          { file: 'image45.jpg', caption: '台北101' },
+          { file: 'image46.jpg', caption: '凤梨酥' }
+        ],
+        pngImages: [
+          { file: 'image90.png', caption: '台湾机车女孩' }
+        ]
+      },
+      '香港': {
+        emoji: '🎢', abbr: '港', capital: '—',
+        feature: '迪士尼乐园、紫荆花、购物天堂',
+        avatar: 'png-images/image174.png',
+        images: [
+          { file: 'image66.jpg', caption: '香港迪士尼乐园' },
+          { file: 'image67.jpg', caption: '维多利亚港' },
+          { file: 'image68.jpg', caption: '金紫荆广场' }
+        ],
+        pngImages: [
+          { file: 'image174.png', caption: '香港潮人' },
+          { file: 'image191.png', caption: '菠萝油' }
+        ]
+      },
+      '澳门': {
+        emoji: '⛪', abbr: '澳', capital: '—',
+        feature: '大三巴牌坊、葡式蛋挞',
+        avatar: 'png-images/image173.png',
+        images: [
+          { file: 'image69.jpg', caption: '大三巴牌坊' },
+          { file: 'image70.jpg', caption: '葡式蛋挞' }
+        ],
+        pngImages: [
+          { file: 'image173.png', caption: '澳门赌神' }
+        ]
+      }
+    }
+  }
+};
+
+// ========== 渲染地区Tab ==========
+let currentRegion = 'huabei';
+let currentProvince = null;
+let currentImageIdx = 0;
+
+function init() {
+  const tabsContainer = document.getElementById('regionTabs');
+  const regionKeys = Object.keys(provinceData);
+  
+  regionKeys.forEach((key, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'region-tab' + (idx === 0 ? ' active' : '');
+    btn.textContent = provinceData[key].name;
+    btn.onclick = () => switchRegion(key);
+    tabsContainer.appendChild(btn);
+  });
+  
+  showRegion('huabei');
+  createStars();
+}
+
+function switchRegion(region) {
+  currentRegion = region;
+  document.querySelectorAll('.region-tab').forEach((tab, idx) => {
+    tab.classList.toggle('active', Object.keys(provinceData)[idx] === region);
+  });
+  showRegion(region);
+}
+
+function showRegion(region) {
+  const grid = document.getElementById('provinceGrid');
+  grid.innerHTML = '';
+  const data = provinceData[region];
+  
+  Object.entries(data.provinces).forEach(([name, info]) => {
+    const totalImages = info.images.length + (info.pngImages ? info.pngImages.length : 0);
+    const card = document.createElement('div');
+    card.className = 'province-card';
+    const emojiHtml = info.avatar
+      ? `<img src="${info.avatar}" class="p-avatar" alt="${name}" onerror="this.outerHTML='<span class=\\'p-emoji\\'>${info.emoji}</span>'">`
+      : `<span class="p-emoji">${info.emoji}</span>`;
+    card.innerHTML = `
+      ${emojiHtml}
+      <div class="p-name">${name}</div>
+      <div class="p-count">${totalImages} 张图片</div>
+    `;
+    card.onclick = () => openModal(region, name);
+    grid.appendChild(card);
+  });
+}
+
+// ========== 模态框 ==========
+let currentAllImages = [];
+
+function openModal(region, provinceName) {
+  currentProvince = { region, name: provinceName };
+  currentImageIdx = 0;
+  
+  const info = provinceData[region].provinces[provinceName];
+  
+  // 合并JPG和PNG图片
+  currentAllImages = [];
+  info.images.forEach(img => currentAllImages.push({ ...img, folder: 'images/' }));
+  if (info.pngImages) {
+    info.pngImages.forEach(img => currentAllImages.push({ ...img, folder: 'png-images/' }));
+  }
+  
+  document.getElementById('modalTitle').textContent = `${info.emoji} ${provinceName}`;
+  document.getElementById('modalInfoTitle').textContent = `${provinceName} · ${info.abbr}`;
+  document.getElementById('modalInfoText').innerHTML = `
+    <strong>简称：</strong>${info.abbr}<br>
+    <strong>省会：</strong>${info.capital}<br>
+    <strong>特色：</strong>${info.feature}<br>
+    <strong>图片数：</strong>${currentAllImages.length} 张
+  `;
+  
+  // 缩略图
+  const thumbsContainer = document.getElementById('modalThumbs');
+  thumbsContainer.innerHTML = '';
+  currentAllImages.forEach((img, idx) => {
+    const thumb = document.createElement('img');
+    const isPng = img.folder === 'png-images/';
+    thumb.className = 'modal-thumb' + (idx === 0 ? ' active' : '') + (isPng ? ' png-thumb' : '');
+    thumb.src = img.folder + img.file;
+    thumb.onclick = () => showImage(idx);
+    thumbsContainer.appendChild(thumb);
+  });
+  
+  document.getElementById('modalOverlay').classList.add('active');
+  showImage(0);
+}
+
+function showImage(idx) {
+  currentImageIdx = idx;
+  
+  const imgEl = document.getElementById('modalImage');
+  imgEl.style.opacity = '0.5';
+  
+  setTimeout(() => {
+    imgEl.src = currentAllImages[idx].folder + currentAllImages[idx].file;
+    imgEl.style.opacity = '1';
+  }, 150);
+  
+  document.getElementById('modalCaption').textContent = currentAllImages[idx].caption;
+  document.getElementById('imageCounter').textContent = `${idx + 1} / ${currentAllImages.length}`;
+  
+  document.querySelectorAll('.modal-thumb').forEach((t, i) => {
+    t.classList.toggle('active', i === idx);
+  });
+}
+
+function nextImage() {
+  showImage((currentImageIdx + 1) % currentAllImages.length);
+}
+
+function prevImage() {
+  showImage((currentImageIdx - 1 + currentAllImages.length) % currentAllImages.length);
+}
+
+function closeModal(e) {
+  if (!e || e.target.id === 'modalOverlay') {
+    document.getElementById('modalOverlay').classList.remove('active');
+  }
+}
+
+// 键盘控制
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('modalOverlay').classList.contains('active')) return;
+  if (e.key === 'ArrowRight') nextImage();
+  if (e.key === 'ArrowLeft') prevImage();
+  if (e.key === 'Escape') closeModal();
+});
+
+// ========== 背景星星 ==========
+function createStars() {
+  const container = document.getElementById('bgStars');
+  for (let i = 0; i < 60; i++) {
+    const star = document.createElement('div');
+    star.className = 'bg-star';
+    star.style.left = Math.random() * 100 + '%';
+    star.style.top = Math.random() * 100 + '%';
+    star.style.animationDelay = Math.random() * 3 + 's';
+    star.style.width = star.style.height = (Math.random() * 3 + 1) + 'px';
+    container.appendChild(star);
+  }
+}
+
+// 初始化
+init();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>环游中国——认识34个省 | 互动课件</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    background: #0a1628;
+    color: #fff;
+    overflow: hidden;
+    height: 100vh;
+    user-select: none;
+  }
+
+  /* 幻灯片容器 */
+  .slide-container {
+    width: 100%;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 60px;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    overflow-y: auto;
+  }
+
+  .slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+
+  .slide.prev {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+
+  /* 封面页 */
+  .slide.cover {
+    background: linear-gradient(135deg, #1a237e 0%, #283593 30%, #1565c0 60%, #0d47a1 100%);
+    justify-content: center;
+  }
+
+  .cover-content {
+    text-align: center;
+    animation: fadeInUp 1s ease;
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .cover-emoji { font-size: 100px; margin-bottom: 20px; display: block; animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100%{ transform: translateY(0); } 50%{ transform: translateY(-20px); } }
+
+  .cover-title {
+    font-size: 64px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #FFD54F, #FF9800, #FF5722);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: none;
+    margin-bottom: 16px;
+    letter-spacing: 8px;
+  }
+
+  .cover-subtitle {
+    font-size: 28px;
+    color: #90CAF9;
+    margin-bottom: 40px;
+    letter-spacing: 4px;
+  }
+
+  .cover-info {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    margin-top: 30px;
+  }
+
+  .cover-info-item {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 16px;
+    padding: 16px 28px;
+    font-size: 18px;
+    color: #B0BEC5;
+  }
+
+  .cover-info-item span { color: #FFD54F; font-weight: bold; margin-right: 6px; }
+
+  .start-btn {
+    margin-top: 50px;
+    padding: 18px 60px;
+    font-size: 24px;
+    font-weight: bold;
+    border: none;
+    border-radius: 50px;
+    background: linear-gradient(135deg, #FF9800, #F44336);
+    color: #fff;
+    cursor: pointer;
+    letter-spacing: 4px;
+    box-shadow: 0 8px 32px rgba(244,67,54,0.4);
+    transition: all 0.3s;
+  }
+
+  .start-btn:hover { transform: scale(1.05); box-shadow: 0 12px 40px rgba(244,67,54,0.6); }
+
+  /* 导航栏 */
+  .nav-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 70px;
+    background: rgba(10, 22, 40, 0.95);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    z-index: 100;
+  }
+
+  .nav-btn {
+    padding: 12px 30px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 30px;
+    background: transparent;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .nav-btn:hover:not(:disabled) {
+    background: rgba(255,255,255,0.1);
+    border-color: #FFD54F;
+    color: #FFD54F;
+  }
+
+  .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .slide-counter {
+    font-size: 18px;
+    color: #90CAF9;
+    font-weight: bold;
+  }
+
+  .progress-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #FF9800, #F44336, #E91E63);
+    transition: width 0.6s;
+    z-index: 200;
+  }
+
+  /* 通用幻灯片样式 */
+  .slide-title {
+    font-size: 48px;
+    font-weight: 900;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #FFD54F, #FF9800);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .slide-subtitle {
+    font-size: 20px;
+    color: #90CAF9;
+    margin-bottom: 40px;
+  }
+
+  /* 目录页 */
+  .toc-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    width: 100%;
+    max-width: 1000px;
+  }
+
+  .toc-item {
+    background: rgba(255,255,255,0.05);
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .toc-item:hover {
+    border-color: #FFD54F;
+    background: rgba(255,213,79,0.1);
+    transform: translateY(-5px);
+  }
+
+  .toc-item .icon { font-size: 48px; display: block; margin-bottom: 12px; }
+  .toc-item .label { font-size: 20px; font-weight: bold; color: #fff; }
+  .toc-item .desc { font-size: 14px; color: #90CAF9; margin-top: 8px; }
+
+  /* 内容页通用 */
+  .content-wrapper {
+    width: 100%;
+    max-width: 1200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* 导入页 */
+  .intro-scene {
+    text-align: center;
+    animation: fadeInUp 0.8s ease;
+  }
+
+  .plane-emoji {
+    font-size: 120px;
+    display: block;
+    animation: flyAcross 4s ease-in-out infinite;
+  }
+
+  @keyframes flyAcross {
+    0%, 100% { transform: translateX(-50px) translateY(0) rotate(-5deg); }
+    50% { transform: translateX(50px) translateY(-20px) rotate(5deg); }
+  }
+
+  .intro-text {
+    font-size: 26px;
+    line-height: 2;
+    color: #B0BEC5;
+    margin-top: 30px;
+    max-width: 800px;
+  }
+
+  .intro-text .highlight {
+    color: #FFD54F;
+    font-weight: bold;
+    font-size: 32px;
+  }
+
+  /* 雄鸡图页 */
+  .chicken-map {
+    width: 600px;
+    max-width: 90%;
+    margin: 30px 0;
+  }
+
+  .chicken-svg {
+    width: 100%;
+    filter: drop-shadow(0 0 30px rgba(76,175,80,0.5));
+    animation: pulse 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { filter: drop-shadow(0 0 30px rgba(76,175,80,0.5)); }
+    50% { filter: drop-shadow(0 0 50px rgba(76,175,80,0.8)); }
+  }
+
+  .direction-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-top: 30px;
+    width: 100%;
+    max-width: 800px;
+  }
+
+  .direction-card {
+    background: rgba(255,255,255,0.05);
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    border: 2px solid rgba(255,255,255,0.1);
+  }
+
+  .direction-card .dir-icon { font-size: 48px; }
+  .direction-card .dir-name { font-size: 22px; font-weight: bold; margin: 8px 0; color: #FFD54F; }
+  .direction-card .dir-tip { font-size: 16px; color: #B0BEC5; }
+
+  /* 地区分组页 */
+  .region-page { width: 100%; }
+
+  .region-tabs {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 30px;
+  }
+
+  .region-tab {
+    padding: 10px 24px;
+    border-radius: 30px;
+    border: 2px solid rgba(255,255,255,0.2);
+    background: transparent;
+    color: #B0BEC5;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s;
+  }
+
+  .region-tab.active {
+    border-color: #FFD54F;
+    color: #FFD54F;
+    background: rgba(255,213,79,0.15);
+    font-weight: bold;
+  }
+
+  .region-tab:hover { border-color: #FFD54F; color: #FFD54F; }
+
+  .province-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    width: 100%;
+    max-width: 1200px;
+  }
+
+  .province-card {
+    background: rgba(255,255,255,0.05);
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .province-card:hover {
+    border-color: #FFD54F;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(255,213,79,0.2);
+  }
+
+  .province-card .p-emoji { font-size: 40px; display: block; margin-bottom: 8px; }
+  .province-card .p-name { font-size: 20px; font-weight: bold; color: #fff; }
+  .province-card .p-capital { font-size: 14px; color: #90CAF9; margin-top: 4px; }
+  .province-card .p-feature { font-size: 12px; color: #B0BEC5; margin-top: 6px; }
+
+  .province-card .p-detail {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s;
+    margin-top: 10px;
+    font-size: 13px;
+    color: #B0BEC5;
+    line-height: 1.6;
+  }
+
+  .province-card.expanded .p-detail { max-height: 200px; }
+
+  /* 飞机游戏页 */
+  .game-area {
+    width: 100%;
+    max-width: 1000px;
+    text-align: center;
+  }
+
+  .game-question {
+    font-size: 36px;
+    font-weight: bold;
+    color: #FFD54F;
+    margin-bottom: 30px;
+    animation: fadeInUp 0.5s ease;
+  }
+
+  .game-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+
+  .game-option {
+    padding: 24px;
+    font-size: 22px;
+    border: 3px solid rgba(255,255,255,0.2);
+    border-radius: 20px;
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .game-option:hover { border-color: #FFD54F; background: rgba(255,213,79,0.1); }
+  .game-option.correct { border-color: #4CAF50; background: rgba(76,175,80,0.2); }
+  .game-option.wrong { border-color: #F44336; background: rgba(244,67,54,0.2); }
+
+  .game-score {
+    font-size: 20px;
+    color: #B0BEC5;
+    margin-top: 20px;
+  }
+
+  .game-score span { color: #FFD54F; font-weight: bold; font-size: 28px; }
+
+  .next-question-btn {
+    margin-top: 20px;
+    padding: 14px 40px;
+    font-size: 18px;
+    border: none;
+    border-radius: 30px;
+    background: linear-gradient(135deg, #4CAF50, #2196F3);
+    color: #fff;
+    cursor: pointer;
+    display: none;
+  }
+
+  .next-question-btn.show { display: inline-block; }
+
+  /* 记忆卡片页 */
+  .flashcard-area {
+    width: 100%;
+    max-width: 1000px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .flashcard {
+    width: 400px;
+    height: 280px;
+    perspective: 1000px;
+    cursor: pointer;
+    margin-bottom: 30px;
+  }
+
+  .flashcard-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s;
+  }
+
+  .flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+
+  .flashcard-front, .flashcard-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+  }
+
+  .flashcard-front {
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+    border: 2px solid rgba(255,255,255,0.2);
+  }
+
+  .flashcard-back {
+    background: linear-gradient(135deg, rgba(255,213,79,0.15), rgba(255,152,0,0.1));
+    border: 2px solid rgba(255,213,79,0.3);
+    transform: rotateY(180deg);
+  }
+
+  .fc-emoji { font-size: 64px; margin-bottom: 16px; }
+  .fc-name { font-size: 36px; font-weight: bold; color: #FFD54F; }
+  .fc-info { font-size: 16px; color: #B0BEC5; margin-top: 8px; text-align: center; line-height: 1.8; }
+
+  .flashcard-nav {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .fc-btn {
+    padding: 12px 30px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 30px;
+    background: transparent;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .fc-btn:hover { border-color: #FFD54F; color: #FFD54F; }
+  .fc-counter { font-size: 18px; color: #90CAF9; }
+
+  .flip-hint {
+    font-size: 14px;
+    color: #607D8B;
+    margin-top: 16px;
+  }
+
+  /* 课后活动页 */
+  .activity-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    width: 100%;
+    max-width: 1100px;
+  }
+
+  .activity-card {
+    background: rgba(255,255,255,0.05);
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 30px;
+    text-align: center;
+    transition: all 0.3s;
+  }
+
+  .activity-card:hover {
+    border-color: #FFD54F;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(255,213,79,0.15);
+  }
+
+  .activity-card .a-icon { font-size: 56px; display: block; margin-bottom: 16px; }
+  .activity-card .a-title { font-size: 22px; font-weight: bold; color: #fff; margin-bottom: 12px; }
+  .activity-card .a-desc { font-size: 15px; color: #B0BEC5; line-height: 1.8; }
+
+  /* 教学小贴士页 */
+  .tips-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    width: 100%;
+    max-width: 1000px;
+  }
+
+  .tip-card {
+    background: rgba(255,255,255,0.05);
+    border-radius: 20px;
+    padding: 24px;
+    border-left: 5px solid #FFD54F;
+  }
+
+  .tip-card .tip-icon { font-size: 36px; margin-bottom: 12px; display: block; }
+  .tip-card .tip-title { font-size: 20px; font-weight: bold; color: #FFD54F; margin-bottom: 8px; }
+  .tip-card .tip-text { font-size: 15px; color: #B0BEC5; line-height: 1.8; }
+
+  /* 结束页 */
+  .end-content { text-align: center; animation: fadeInUp 1s ease; }
+
+  .end-emoji { font-size: 100px; display: block; margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
+  .end-title { font-size: 52px; font-weight: 900; color: #FFD54F; margin-bottom: 20px; }
+  .end-text { font-size: 22px; color: #90CAF9; line-height: 2; max-width: 700px; }
+
+  .restart-btn {
+    margin-top: 40px;
+    padding: 18px 60px;
+    font-size: 22px;
+    font-weight: bold;
+    border: none;
+    border-radius: 50px;
+    background: linear-gradient(135deg, #4CAF50, #2196F3);
+    color: #fff;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: all 0.3s;
+  }
+
+  .restart-btn:hover { transform: scale(1.05); }
+
+  /* 地图SVG样式 */
+  .china-map-svg { width: 100%; max-width: 700px; }
+
+  .province-path {
+    fill: rgba(33,150,243,0.3);
+    stroke: rgba(33,150,243,0.6);
+    stroke-width: 1;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .province-path:hover {
+    fill: rgba(255,213,79,0.5);
+    stroke: #FFD54F;
+  }
+
+  /* 响应式 */
+  @media (max-width: 768px) {
+    .slide { padding: 20px 20px; }
+    .cover-title { font-size: 36px; }
+    .slide-title { font-size: 32px; }
+    .toc-grid { grid-template-columns: repeat(2, 1fr); }
+    .province-grid { grid-template-columns: repeat(2, 1fr); }
+    .game-options { grid-template-columns: 1fr; }
+    .activity-grid { grid-template-columns: 1fr; }
+    .tips-grid { grid-template-columns: 1fr; }
+    .direction-grid { grid-template-columns: 1fr; }
+  }
+
+  /* 背景装饰 */
+  .bg-stars {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: -1;
+    overflow: hidden;
+  }
+
+  .bg-star {
+    position: absolute;
+    width: 3px; height: 3px;
+    background: #fff;
+    border-radius: 50%;
+    animation: twinkle 3s ease-in-out infinite;
+  }
+
+  @keyframes twinkle { 0%,100%{ opacity: 0.2; } 50%{ opacity: 1; } }
+</style>
+</head>
+<body>
+
+<!-- 背景星星 -->
+<div class="bg-stars" id="bgStars"></div>
+
+<!-- 进度条 -->
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- 幻灯片容器 -->
+<div class="slide-container" id="slideContainer">
+
+  <!-- 第1页：封面 -->
+  <div class="slide cover active" data-slide="0">
+    <div class="cover-content">
+      <span class="cover-emoji">✈️</span>
+      <div class="cover-title">环游中国</div>
+      <div class="cover-subtitle">认识 34 个省级行政区</div>
+      <div class="cover-info">
+        <div class="cover-info-item"><span>🎯</span>适合年龄：6-10岁</div>
+        <div class="cover-info-item"><span>⏰</span>课时：2课时</div>
+        <div class="cover-info-item"><span>📍</span>共34个省</div>
+      </div>
+      <button class="start-btn" onclick="goToSlide(1)">开始学习 ✨</button>
+    </div>
+  </div>
+
+  <!-- 第2页：目录 -->
+  <div class="slide" data-slide="1">
+    <div class="content-wrapper">
+      <div class="slide-title">📋 课程目录</div>
+      <div class="slide-subtitle">点击进入对应环节</div>
+      <div class="toc-grid">
+        <div class="toc-item" onclick="goToSlide(2)">
+          <span class="icon">🌟</span>
+          <div class="label">导入环节</div>
+          <div class="desc">魔法飞机环游中国</div>
+        </div>
+        <div class="toc-item" onclick="goToSlide(3)">
+          <span class="icon">🗺️</span>
+          <div class="label">认识地图</div>
+          <div class="desc">雄鸡图 & 方向口诀</div>
+        </div>
+        <div class="toc-item" onclick="goToSlide(5)">
+          <span class="icon">🏛️</span>
+          <div class="label">34省速记</div>
+          <div class="desc">按地区分组学习</div>
+        </div>
+        <div class="toc-item" onclick="goToSlide(10)">
+          <span class="icon">🎮</span>
+          <div class="label">互动游戏</div>
+          <div class="desc">飞机起飞挑战赛</div>
+        </div>
+        <div class="toc-item" onclick="goToSlide(11)">
+          <span class="icon">🃏</span>
+          <div class="label">记忆卡片</div>
+          <div class="desc">翻翻卡学习各省特色</div>
+        </div>
+        <div class="toc-item" onclick="goToSlide(12)">
+          <span class="icon">📝</span>
+          <div class="label">课后活动</div>
+          <div class="desc">延伸学习与亲子任务</div>
+        </div>
+        <div class="toc-item" onclick="window.open('province-gallery.html', '_blank')">
+          <span class="icon">📷</span>
+          <div class="label">省份图片探索</div>
+          <div class="desc">86张真实图片，认识美丽中国</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 第3页：导入环节 -->
+  <div class="slide" data-slide="2">
+    <div class="content-wrapper intro-scene">
+      <div class="slide-title">🌟 导入环节</div>
+      <div class="slide-subtitle">约 5 分钟</div>
+      <span class="plane-emoji">✈️</span>
+      <div class="intro-text">
+        今天我们要当<strong class="highlight">小小旅行家</strong> 🧳<br>
+        坐上魔法飞机 ✈️<br>
+        飞遍我们伟大的祖国！<br><br>
+        <span style="font-size:20px;color:#B0BEC5;">准备好出发了吗？ Let's go! 🚀</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 第4页：认识地图 - 雄鸡图 -->
+  <div class="slide" data-slide="3">
+    <div class="content-wrapper" style="align-items:center;text-align:center;">
+      <div class="slide-title">🗺️ 认识中国地图</div>
+      <div class="slide-subtitle">中国地图像一只雄鸡</div>
+      <svg class="chicken-svg" viewBox="0 0 800 1000" style="max-height:500px;">
+        <!-- 雄鸡轮廓 -->
+        <path d="M580,50 L620,80 L650,60 L660,100 L700,120 L720,200 L740,280 L750,350 L760,420 L740,480 L720,520 L700,560 L650,600 L620,580 L600,620 L580,680 L560,740 L540,800 L520,860 L500,920 L480,960 L520,980 L560,970 L580,940 L560,900 L580,860 L600,820 L580,780 L560,740 L540,700 L520,660 L500,620 L480,580 L460,540 L440,500 L420,460 L400,420 L380,380 L360,340 L340,300 L320,260 L300,220 L280,180 L260,140 L240,100 L260,80 L280,60 L300,50 L340,40 L380,35 L420,40 Z" fill="rgba(76,175,80,0.3)" stroke="#4CAF50" stroke-width="3"/>
+        <!-- 头部标注 -->
+        <text x="670" y="90" fill="#FFD54F" font-size="22" font-weight="bold">鸡头 🐓</text>
+        <line x1="660" y1="100" x2="680" y2="85" stroke="#FFD54F" stroke-width="2"/>
+        <!-- 尾巴标注 -->
+        <text x="100" y="180" fill="#FFD54F" font-size="22" font-weight="bold">鸡尾 🪶</text>
+        <line x1="260" y1="140" x2="130" y2="175" stroke="#FFD54F" stroke-width="2"/>
+        <!-- 鸡腹 -->
+        <text x="450" y="550" fill="#FFD54F" font-size="22" font-weight="bold">鸡腹 🟡</text>
+        <!-- 鸡背 -->
+        <text x="300" y="350" fill="#FFD54F" font-size="22" font-weight="bold">鸡背 🟢</text>
+        <!-- 鸡脚 -->
+        <text x="520" y="990" fill="#FFD54F" font-size="20" font-weight="bold">鸡脚 🦶</text>
+        <line x1="520" y1="980" x2="520" y2="995" stroke="#FFD54F" stroke-width="2"/>
+        <!-- 省份标注 -->
+        <text x="640" y="140" fill="#fff" font-size="14">黑龙江</text>
+        <text x="660" y="200" fill="#fff" font-size="14">吉林</text>
+        <text x="650" y="260" fill="#fff" font-size="14">辽宁</text>
+        <text x="100" y="220" fill="#fff" font-size="14">新疆</text>
+        <text x="200" y="320" fill="#fff" font-size="14">西藏</text>
+        <text x="520" y="420" fill="#fff" font-size="14">内蒙古</text>
+        <text x="480" y="520" fill="#fff" font-size="14">河北</text>
+        <text x="500" y="620" fill="#fff" font-size="14">山东</text>
+        <text x="440" y="720" fill="#fff" font-size="14">江苏</text>
+        <text x="400" y="820" fill="#fff" font-size="14">江西</text>
+        <text x="350" y="920" fill="#fff" font-size="14">广东</text>
+        <text x="300" y="980" fill="#fff" font-size="14">海南</text>
+        <text x="380" y="500" fill="#FFD54F" font-size="16" font-weight="bold">北京★</text>
+      </svg>
+      <div style="margin-top:20px;font-size:18px;color:#B0BEC5;">头在东北（黑龙江），尾在新疆，腹在华北，脚在广东海南</div>
+    </div>
+  </div>
+
+  <!-- 第5页：方向口诀 -->
+  <div class="slide" data-slide="4">
+    <div class="content-wrapper">
+      <div class="slide-title">🧭 方向口诀</div>
+      <div class="slide-subtitle">学会看地图的方向</div>
+      <div class="direction-grid">
+        <div class="direction-card">
+          <div class="dir-icon">⬆️</div>
+          <div class="dir-name">上北</div>
+          <div class="dir-tip">地图的上方是北方 🏔️</div>
+        </div>
+        <div class="direction-card">
+          <div class="dir-icon">⬇️</div>
+          <div class="dir-name">下南</div>
+          <div class="dir-tip">地图的下方是南方 🌴</div>
+        </div>
+        <div class="direction-card">
+          <div class="dir-icon">⬅️</div>
+          <div class="dir-name">左西</div>
+          <div class="dir-tip">地图的左方是西方 🐪</div>
+        </div>
+        <div class="direction-card">
+          <div class="dir-icon">➡️</div>
+          <div class="dir-name">右东</div>
+          <div class="dir-tip">地图的右方是东方 🌊</div>
+        </div>
+      </div>
+      <div style="margin-top:30px;padding:20px 40px;background:rgba(255,213,79,0.1);border-radius:16px;border:2px solid rgba(255,213,79,0.3);font-size:20px;color:#FFD54F;">
+        💡 记忆口诀：<strong>上北下南，左西右东</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- 第6页：34省速记 - 地区切换 -->
+  <div class="slide" data-slide="5">
+    <div class="content-wrapper region-page">
+      <div class="slide-title">🏛️ 34省速记</div>
+      <div class="slide-subtitle">按地区分组记忆，更容易！</div>
+      <div class="region-tabs" id="regionTabs">
+        <button class="region-tab active" onclick="showRegion('huabei')">🌸 华北 5个</button>
+        <button class="region-tab" onclick="showRegion('dongbei')">🌲 东北 3个</button>
+        <button class="region-tab" onclick="showRegion('huadong')">🌊 华东 7个</button>
+        <button class="region-tab" onclick="showRegion('huazhong')">🌾 华中 3个</button>
+        <button class="region-tab" onclick="showRegion('huanan')">🌴 华南 3个</button>
+        <button class="region-tab" onclick="showRegion('xinan')">🏔️ 西南 5个</button>
+        <button class="region-tab" onclick="showRegion('xibei')">🐪 西北 5个</button>
+        <button class="region-tab" onclick="showRegion('gangao')">🎯 港澳台 3个</button>
+      </div>
+      <div class="province-grid" id="provinceGrid"></div>
+      <div style="margin-top:20px;text-align:center;">
+        <a href="province-gallery.html" target="_blank" style="display:inline-block;padding:12px 30px;border:2px solid rgba(255,213,79,0.5);border-radius:30px;color:#FFD54F;text-decoration:none;font-size:15px;transition:all 0.3s;" onmouseover="this.style.background='rgba(255,213,79,0.1)'" onmouseout="this.style.background='transparent'">
+          📷 点击查看各省真实图片（86张）
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 第7-9页：留出空间给地区详情（用tab切换代替） -->
+
+  <!-- 第10页：互动游戏 -->
+  <div class="slide" data-slide="6">
+    <div class="content-wrapper">
+      <div class="slide-title">🎮 互动游戏</div>
+      <div class="slide-subtitle">飞机起飞挑战赛！</div>
+      <div class="game-area" id="gameArea">
+        <div class="game-question" id="gameQuestion">点击"开始游戏"按钮</div>
+        <div class="game-options" id="gameOptions"></div>
+        <div class="game-score">得分：<span id="gameScore">0</span> 分 | 第 <span id="gameRound">1</span> 题 / 共10题</div>
+        <button class="next-question-btn" id="nextQuestionBtn" onclick="nextQuestion()">下一题 ➡️</button>
+        <button class="start-btn" style="margin-top:30px;padding:14px 40px;font-size:18px;" onclick="startGame()">开始游戏 🚀</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 第11页：记忆卡片 -->
+  <div class="slide" data-slide="7">
+    <div class="content-wrapper flashcard-area">
+      <div class="slide-title">🃏 各省记忆卡片</div>
+      <div class="slide-subtitle">点击卡片翻转，学习各省特色</div>
+      <div class="flashcard" id="flashcard" onclick="flipCard()">
+        <div class="flashcard-inner">
+          <div class="flashcard-front">
+            <div class="fc-emoji" id="fcEmoji">🏛️</div>
+            <div class="fc-name" id="fcName">北京</div>
+            <div class="fc-info" id="fcInfo">简称：京 | 省会：北京</div>
+          </div>
+          <div class="flashcard-back">
+            <div class="fc-emoji">🏯</div>
+            <div class="fc-name" id="fcFeature">特色记忆</div>
+            <div class="fc-info" id="fcBackInfo">天安门、长城、故宫、烤鸭</div>
+          </div>
+        </div>
+      </div>
+      <div class="flip-hint">👆 点击卡片翻转</div>
+      <div class="flashcard-nav">
+        <button class="fc-btn" onclick="prevCard()">⬅️ 上一张</button>
+        <div class="fc-counter" id="fcCounter">1 / 12</div>
+        <button class="fc-btn" onclick="nextCard()">下一张 ➡️</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 第12页：课后活动 -->
+  <div class="slide" data-slide="8">
+    <div class="content-wrapper">
+      <div class="slide-title">📝 课后活动</div>
+      <div class="slide-subtitle">延伸学习，巩固知识</div>
+      <div class="activity-grid">
+        <div class="activity-card">
+          <span class="a-icon">🎨</span>
+          <div class="a-title">画一画</div>
+          <div class="a-desc">画出你去过（或想去）的省份的特色，分享给同学听</div>
+        </div>
+        <div class="activity-card">
+          <span class="a-icon">📦</span>
+          <div class="a-title">集旗活动</div>
+          <div class="a-desc">每认识一个省，在地图上贴一面小红旗 🚩，看看谁能集齐34面！</div>
+        </div>
+        <div class="activity-card">
+          <span class="a-icon">👨👩👧</span>
+          <div class="a-title">亲子任务</div>
+          <div class="a-desc">和爸爸妈妈一起找找：家乡在哪个省？省会叫什么？有什么好吃的？</div>
+        </div>
+        <div class="activity-card">
+          <span class="a-icon">📚</span>
+          <div class="a-title">读一读</div>
+          <div class="a-desc">找一本关于中国地理的绘本，和爸爸妈妈一起读，发现更多有趣的知识</div>
+        </div>
+        <div class="activity-card">
+          <span class="a-icon">🎵</span>
+          <div class="a-title">唱一唱</div>
+          <div class="a-desc">学唱《爱我中华》，感受56个民族的团结与美丽 🇨🇳</div>
+        </div>
+        <div class="activity-card">
+          <span class="a-icon">🌐</span>
+          <div class="a-title">查一查</div>
+          <div class="a-desc">上网搜索一个你最想去的省份，了解那里的天气、美食和景点</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 第13页：教学小贴士 -->
+  <div class="slide" data-slide="9">
+    <div class="content-wrapper">
+      <div class="slide-title">💡 教学小贴士</div>
+      <div class="slide-subtitle">让课堂更有趣、更有效</div>
+      <div class="tips-grid">
+        <div class="tip-card">
+          <span class="tip-icon">🗣️</span>
+          <div class="tip-title">多讲故事</div>
+          <div class="tip-text">每个省都有有趣的故事，比如"孙悟空住在花果山（江苏）"、"熊猫的家乡在四川"，孩子记得更牢！</div>
+        </div>
+        <div class="tip-card">
+          <span class="tip-icon">🎵</span>
+          <div class="tip-title">编儿歌</div>
+          <div class="tip-text">"两湖两广两河山，五江二宁青陕甘……" 用简单的儿歌帮助孩子记忆34个省的位置和名称。</div>
+        </div>
+        <div class="tip-card">
+          <span class="tip-icon">🏆</span>
+          <div class="tip-title">及时奖励</div>
+          <div class="tip-text">每记住5个省，奖励一枚小贴纸 ⭐；集齐34个省，颁发"小小地理家"奖状！</div>
+        </div>
+        <div class="tip-card">
+          <span class="tip-icon">🌈</span>
+          <div class="tip-title">联系生活</div>
+          <div class="tip-text">孩子吃的水果（海南香蕉、新疆葡萄）、穿的衣服（广东制造），都来自不同的省份，让知识走进生活。</div>
+        </div>
+        <div class="tip-card">
+          <span class="tip-icon">🖍️</span>
+          <div class="tip-title">动手涂色</div>
+          <div class="tip-text">给各省涂上不同颜色，按地区分区涂色，加深记忆，还能锻炼动手能力。</div>
+        </div>
+        <div class="tip-card">
+          <span class="tip-icon">👫</span>
+          <div class="tip-title">小组竞赛</div>
+          <div class="tip-text">分组进行"省份知识抢答赛"，答对最多的小组获得"地理探险队"称号！</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 第14页：结束页 -->
+  <div class="slide" data-slide="10">
+    <div class="content-wrapper end-content">
+      <span class="end-emoji">🎉</span>
+      <div class="end-title">恭喜完成学习！</div>
+      <div class="end-text">
+        你已经认识了中国的 <strong style="color:#FFD54F;">34个省级行政区</strong> 🇨🇳<br>
+        你是最棒的<strong style="color:#4CAF50;">小小旅行家</strong>！ 🧳<br><br>
+        继续探索我们美丽的大中国吧！ 🌟
+      </div>
+      <button class="restart-btn" onclick="goToSlide(0)">🔄 重新学习</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- 导航栏 -->
+<div class="nav-bar">
+  <button class="nav-btn" id="prevBtn" onclick="prevSlide()">⬅️ 上一页</button>
+  <div class="slide-counter" id="slideCounter">1 / 11</div>
+  <button class="nav-btn" id="nextBtn" onclick="nextSlide()">下一页 ➡️</button>
+</div>
+
+<script>
+// ========== 数据 ==========
+const provincesData = {
+  huabei:   { name: '华北地区', color: '#E91E63', list: [
+    { name: '北京', abbr: '京', capital: '北京', emoji: '🏛️', feature: '天安门、长城、故宫、烤鸭' },
+    { name: '天津', abbr: '津', capital: '天津', emoji: '🎡', feature: '狗不理包子、天津眼、相声' },
+    { name: '河北', abbr: '冀', capital: '石家庄', emoji: '🏰', feature: '承德避暑山庄、秦皇岛' },
+    { name: '山西', abbr: '晋', capital: '太原', emoji: '⛩️', feature: '平遥古城、云冈石窟、醋' },
+    { name: '内蒙古', abbr: '蒙', capital: '呼和浩特', emoji: '🐎', feature: '大草原、蒙古包、骑马' }
+  ]},
+  dongbei:   { name: '东北地区', color: '#4CAF50', list: [
+    { name: '辽宁', abbr: '辽', capital: '沈阳', emoji: '❄️', feature: '沈阳故宫、大连海滨' },
+    { name: '吉林', abbr: '吉', capital: '长春', emoji: '⛄', feature: '长白山、雾凇、滑雪' },
+    { name: '黑龙江', abbr: '黑', capital: '哈尔滨', emoji: '🧊', feature: '冰雪大世界、中央大街' }
+  ]},
+  huadong:   { name: '华东地区', color: '#2196F3', list: [
+    { name: '上海', abbr: '沪', capital: '上海', emoji: '🗼', feature: '东方明珠、外滩、迪士尼' },
+    { name: '江苏', abbr: '苏', capital: '南京', emoji: '🌸', feature: '苏州园林、南京夫子庙' },
+    { name: '浙江', abbr: '浙', capital: '杭州', emoji: '🍵', feature: '西湖、龙井茶、钱塘江' },
+    { name: '安徽', abbr: '皖', capital: '合肥', emoji: '🏔️', feature: '黄山、徽派建筑' },
+    { name: '福建', abbr: '闽', capital: '福州', emoji: '🍵', feature: '武夷山、土楼、铁观音' },
+    { name: '江西', abbr: '赣', capital: '南昌', emoji: '🐒', feature: '庐山、井冈山、景德镇' },
+    { name: '山东', abbr: '鲁', capital: '济南', emoji: '🏔️', feature: '泰山、孔子故里、青岛啤酒' }
+  ]},
+  huazhong: { name: '华中地区', color: '#FF9800', list: [
+    { name: '河南', abbr: '豫', capital: '郑州', emoji: '🥋', feature: '少林寺、龙门石窟、烩面' },
+    { name: '湖北', abbr: '鄂', capital: '武汉', emoji: '🌉', feature: '黄鹤楼、武汉热干面' },
+    { name: '湖南', abbr: '湘', capital: '长沙', emoji: '🐼', feature: '张家界、臭豆腐、辣椒' }
+  ]},
+  huanan:    { name: '华南地区', color: '#FF5722', list: [
+    { name: '广东', abbr: '粤', capital: '广州', emoji: '🗼', feature: '小蛮腰、早茶、粤语' },
+    { name: '广西', abbr: '桂', capital: '南宁', emoji: '🏝️', feature: '桂林山水、北海银滩' },
+    { name: '海南', abbr: '琼', capital: '海口', emoji: '🏖️', feature: '三亚海滩、椰子、热带水果' }
+  ]},
+  xinan:     { name: '西南地区', color: '#9C27B0', list: [
+    { name: '重庆', abbr: '渝', capital: '重庆', emoji: '🌶️', feature: '火锅、洪崖洞、轻轨穿楼' },
+    { name: '四川', abbr: '川/蜀', capital: '成都', emoji: '🐼', feature: '大熊猫、火锅、九寨沟' },
+    { name: '贵州', abbr: '黔/贵', capital: '贵阳', emoji: '💧', feature: '黄果树瀑布、茅台酒' },
+    { name: '云南', abbr: '云/滇', capital: '昆明', emoji: '🌺', feature: '大理、丽江、西双版纳' },
+    { name: '西藏', abbr: '藏', capital: '拉萨', emoji: '🏔️', feature: '布达拉宫、珠穆朗玛峰' }
+  ]},
+  xibei:     { name: '西北地区', color: '#795548', list: [
+    { name: '陕西', abbr: '陕/秦', capital: '西安', emoji: '🏯', feature: '兵马俑、华山、肉夹馍' },
+    { name: '甘肃', abbr: '甘/陇', capital: '兰州', emoji: '🏜️', feature: '敦煌莫高窟、兰州拉面' },
+    { name: '青海', abbr: '青', capital: '西宁', emoji: '🌊', feature: '青海湖、茶卡盐湖' },
+    { name: '宁夏', abbr: '宁', capital: '银川', emoji: '🕌', feature: '西夏王陵、枸杞' },
+    { name: '新疆', abbr: '新', capital: '乌鲁木齐', emoji: '🍇', feature: '吐鲁番葡萄、天山、烤羊肉' }
+  ]},
+  gangao:    { name: '特别行政区', color: '#607D8B', list: [
+    { name: '香港', abbr: '港', capital: '—', emoji: '🎢', feature: '迪士尼乐园、紫荆花、购物天堂' },
+    { name: '澳门', abbr: '澳', capital: '—', emoji: '⛪', feature: '大三巴牌坊、葡式蛋挞' },
+    { name: '台湾', abbr: '台', capital: '台北', emoji: '🏔️', feature: '日月潭、阿里山、珍珠奶茶' }
+  ]}
+};
+
+const flashcards = [
+  { name: '北京', emoji: '🏛️', abbr: '京', capital: '北京', feature: '天安门、长城、故宫、烤鸭' },
+  { name: '上海', emoji: '🗼', abbr: '沪', capital: '上海', feature: '东方明珠、外滩、迪士尼、生煎包' },
+  { name: '广东', emoji: '🗼', abbr: '粤', capital: '广州', feature: '小蛮腰、早茶、粤语、粤菜' },
+  { name: '四川', emoji: '🐼', abbr: '川/蜀', capital: '成都', feature: '大熊猫、火锅、九寨沟、都江堰' },
+  { name: '新疆', emoji: '🍇', abbr: '新', capital: '乌鲁木齐', feature: '吐鲁番葡萄、天山、烤羊肉串' },
+  { name: '西藏', emoji: '🏔️', abbr: '藏', capital: '拉萨', feature: '布达拉宫、珠穆朗玛峰、牦牛' },
+  { name: '云南', emoji: '🌺', abbr: '云/滇', capital: '昆明', feature: '大理、丽江、西双版纳、过桥米线' },
+  { name: '陕西', emoji: '🏯', abbr: '陕/秦', capital: '西安', feature: '兵马俑、华山、肉夹馍、凉皮' },
+  { name: '浙江', emoji: '🍵', abbr: '浙', capital: '杭州', feature: '西湖、龙井茶、钱塘江大潮' },
+  { name: '台湾', emoji: '🏔️', abbr: '台', capital: '台北', feature: '日月潭、阿里山、珍珠奶茶' },
+  { name: '香港', emoji: '🎢', abbr: '港', capital: '—', feature: '迪士尼乐园、紫荆花、购物天堂' },
+  { name: '海南', emoji: '🏖️', abbr: '琼', capital: '海口', feature: '三亚海滩、椰子、热带水果' }
+];
+
+const gameQuestions = [
+  { q: '🏛️ 中国的首都是哪里？', options: ['上海', '北京', '广州', '深圳'], answer: 1 },
+  { q: '🐼 大熊猫的家乡在哪个省？', options: ['云南', '四川', '西藏', '贵州'], answer: 1 },
+  { q: '🍇 吐鲁番葡萄产自哪个省？', options: ['甘肃', '内蒙古', '新疆', '宁夏'], answer: 2 },
+  { q: '🏔️ 布达拉宫在哪个省？', options: ['青海', '西藏', '四川', '云南'], answer: 1 },
+  { q: '🌊 东方明珠在哪个城市？', options: ['北京', '广州', '上海', '深圳'], answer: 2 },
+  { q: '🏯 兵马俑在哪个省？', options: ['河南', '山西', '陕西', '甘肃'], answer: 2 },
+  { q: '🌺 三亚海滩在哪个省？', options: ['广西', '广东', '福建', '海南'], answer: 3 },
+  { q: '🎢 迪士尼乐园（中国）在哪个特别行政区？', options: ['澳门', '台湾', '香港', '深圳'], answer: 2 },
+  { q: '🌶️ 火锅是哪位城市的特色美食？', options: ['重庆', '北京', '杭州', '成都'], answer: 0 },
+  { q: '🏔️ 阿里山在哪个省？', options: ['福建', '广东', '海南', '台湾'], answer: 3 },
+  { q: '🍵 龙井茶产自哪个省？', options: ['江苏', '浙江', '安徽', '福建'], answer: 1 },
+  { q: '🏜️ 莫高窟在哪个省？', options: ['新疆', '青海', '甘肃', '宁夏'], answer: 2 },
+  { q: '🎡 狗不理包子是哪里的特色？', options: ['北京', '天津', '河北', '山东'], answer: 1 },
+  { q: '❄️ 冰雪大世界在哪个省？', options: ['吉林', '辽宁', '黑龙江', '内蒙古'], answer: 2 },
+  { q: '🌉 黄鹤楼在哪个省？', options: ['湖南', '湖北', '河南', '江西'], answer: 1 }
+];
+
+// ========== 幻灯片控制 ==========
+let currentSlide = 0;
+const totalSlides = 11;
+
+function updateProgress() {
+  const pct = ((currentSlide + 1) / totalSlides) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('slideCounter').textContent = `${currentSlide + 1} / ${totalSlides}`;
+}
+
+function goToSlide(n) {
+  const slides = document.querySelectorAll('.slide');
+  slides[currentSlide].classList.remove('active');
+  slides[currentSlide].classList.add('prev');
+  currentSlide = Math.max(0, Math.min(n, totalSlides - 1));
+  slides[currentSlide].classList.remove('prev');
+  slides[currentSlide].classList.add('active');
+  updateProgress();
+  updateNavButtons();
+  if (currentSlide === 6) initGame();
+  if (currentSlide === 7) showCard(currentCardIdx);
+}
+
+function nextSlide() { if (currentSlide < totalSlides - 1) goToSlide(currentSlide + 1); }
+function prevSlide() { if (currentSlide > 0) goToSlide(currentSlide - 1); }
+
+function updateNavButtons() {
+  document.getElementById('prevBtn').disabled = currentSlide === 0;
+  document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+}
+
+// 键盘控制
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+  if (e.key === 'ArrowLeft') prevSlide();
+});
+
+// ========== 地区展示 ==========
+function showRegion(region) {
+  document.querySelectorAll('.region-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  const data = provincesData[region];
+  const grid = document.getElementById('provinceGrid');
+  grid.innerHTML = '';
+  data.list.forEach((p, i) => {
+    const card = document.createElement('div');
+    card.className = 'province-card';
+    card.innerHTML = `
+      <span class="p-emoji">${p.emoji}</span>
+      <div class="p-name">${p.name}</div>
+      <div class="p-capital">简称：${p.abbr} | 省会：${p.capital}</div>
+      <div class="p-feature">${p.feature}</div>
+      <div class="p-detail">🌟 特色：${p.feature}</div>
+    `;
+    card.onclick = function() { this.classList.toggle('expanded'); };
+    grid.appendChild(card);
+  });
+}
+
+// ========== 游戏 ==========
+let gameScore = 0, gameRound = 0, gameStarted = false;
+
+function startGame() {
+  gameScore = 0; gameRound = 0; gameStarted = true;
+  document.getElementById('gameScore').textContent = '0';
+  document.getElementById('nextQuestionBtn').style.display = 'none';
+  document.querySelector('#gameArea .start-btn').style.display = 'none';
+  nextQuestion();
+}
+
+function nextQuestion() {
+  if (gameRound >= 10) {
+    document.getElementById('gameQuestion').textContent = `🎉 游戏结束！你得了 ${gameScore} 分！`;
+    document.getElementById('gameOptions').innerHTML = '';
+    document.getElementById('nextQuestionBtn').style.display = 'none';
+    return;
+  }
+  const q = gameQuestions[gameRound % gameQuestions.length];
+  document.getElementById('gameQuestion').textContent = q.q;
+  document.getElementById('gameRound').textContent = gameRound + 1;
+  const optDiv = document.getElementById('gameOptions');
+  optDiv.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('div');
+    btn.className = 'game-option';
+    btn.textContent = opt;
+    btn.onclick = () => checkAnswer(i, q.answer, btn);
+    optDiv.appendChild(btn);
+  });
+  document.getElementById('nextQuestionBtn').style.display = 'none';
+}
+
+function checkAnswer(idx, correct, btn) {
+  const opts = document.querySelectorAll('.game-option');
+  opts.forEach(o => o.style.pointerEvents = 'none');
+  if (idx === correct) {
+    btn.classList.add('correct');
+    gameScore += 10;
+    document.getElementById('gameScore').textContent = gameScore;
+  } else {
+    btn.classList.add('wrong');
+    opts[correct].classList.add('correct');
+  }
+  gameRound++;
+  document.getElementById('nextQuestionBtn').style.display = 'inline-block';
+}
+
+// ========== 记忆卡片 ==========
+let currentCardIdx = 0;
+let isFlipped = false;
+
+function showCard(idx) {
+  const card = flashcards[idx];
+  document.getElementById('fcEmoji').textContent = card.emoji;
+  document.getElementById('fcName').textContent = card.name;
+  document.getElementById('fcInfo').innerHTML = `简称：<strong>${card.abbr}</strong> | 省会：<strong>${card.capital}</strong>`;
+  document.getElementById('fcFeature').textContent = card.name + ' 特色';
+  document.getElementById('fcBackInfo').textContent = card.feature;
+  document.getElementById('fcCounter').textContent = `${idx + 1} / ${flashcards.length}`;
+  document.getElementById('flashcard').classList.remove('flipped');
+  isFlipped = false;
+}
+
+function flipCard() {
+  const el = document.getElementById('flashcard');
+  el.classList.toggle('flipped');
+  isFlipped = !isFlipped;
+}
+
+function nextCard() {
+  currentCardIdx = (currentCardIdx + 1) % flashcards.length;
+  showCard(currentCardIdx);
+}
+
+function prevCard() {
+  currentCardIdx = (currentCardIdx - 1 + flashcards.length) % flashcards.length;
+  showCard(currentCardIdx);
+}
+
+// ========== 背景星星 ==========
+function createStars() {
+  const container = document.getElementById('bgStars');
+  for (let i = 0; i < 80; i++) {
+    const star = document.createElement('div');
+    star.className = 'bg-star';
+    star.style.left = Math.random() * 100 + '%';
+    star.style.top = Math.random() * 100 + '%';
+    star.style.animationDelay = Math.random() * 3 + 's';
+    star.style.width = star.style.height = (Math.random() * 3 + 1) + 'px';
+    container.appendChild(star);
+  }
+}
+
+// 初始化
+createStars();
+showRegion('huabei');
+updateProgress();
+updateNavButtons();
+</script>
+</body>
+</html>

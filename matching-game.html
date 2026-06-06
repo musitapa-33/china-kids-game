@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>环游中国 · 匹配游戏</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    font-family: 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #0a0e27 0%, #1a1a4e 50%, #0d1b3e 100%);
+    min-height: 100vh;
+    color: #fff;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,0.8), transparent),
+      radial-gradient(2px 2px at 40% 70%, rgba(255,255,255,0.6), transparent),
+      radial-gradient(1px 1px at 60% 20%, rgba(255,255,255,0.9), transparent),
+      radial-gradient(1px 1px at 80% 50%, rgba(255,255,255,0.5), transparent),
+      radial-gradient(2px 2px at 10% 80%, rgba(255,255,255,0.7), transparent);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .page-header {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 30px 20px 10px;
+  }
+  .page-header h1 {
+    font-size: 28px;
+    background: linear-gradient(90deg, #FFD54F, #FF9800, #FFD54F);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 6px;
+  }
+  .page-header p { color: #90CAF9; font-size: 14px; }
+
+  .mode-selector {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 15px 20px;
+    flex-wrap: wrap;
+  }
+  .mode-btn {
+    padding: 10px 22px;
+    border: 2px solid rgba(255,213,79,0.4);
+    border-radius: 25px;
+    background: rgba(255,255,255,0.05);
+    color: #FFD54F;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .mode-btn:hover, .mode-btn.active {
+    background: rgba(255,213,79,0.15);
+    border-color: #FFD54F;
+    box-shadow: 0 0 15px rgba(255,213,79,0.2);
+  }
+
+  .game-info {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    padding: 10px 20px 15px;
+    font-size: 14px;
+    color: #90CAF9;
+  }
+  .game-info span { display: flex; align-items: center; gap: 6px; }
+  .game-info strong { color: #FFD54F; font-size: 18px; }
+
+  .game-board {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px 30px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  .card {
+    aspect-ratio: 3/4;
+    perspective: 800px;
+    cursor: pointer;
+  }
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.5s;
+    transform-style: preserve-3d;
+    border-radius: 12px;
+  }
+  .card.flipped .card-inner {
+    transform: rotateY(180deg);
+  }
+  .card.matched .card-inner {
+    transform: rotateY(180deg);
+  }
+  .card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    text-align: center;
+    transition: all 0.3s;
+  }
+  .card-front {
+    background: linear-gradient(135deg, rgba(255,213,79,0.15), rgba(255,152,0,0.1));
+    border: 2px solid rgba(255,213,79,0.3);
+    font-size: 32px;
+  }
+  .card-front:hover {
+    border-color: #FFD54F;
+    box-shadow: 0 0 20px rgba(255,213,79,0.2);
+  }
+  .card-back {
+    background: linear-gradient(135deg, rgba(26,35,126,0.9), rgba(13,27,62,0.9));
+    border: 2px solid rgba(144,202,249,0.3);
+    transform: rotateY(180deg);
+    overflow: hidden;
+  }
+  .card-back .card-emoji { font-size: 28px; margin-bottom: 6px; }
+  .card-back .card-text { font-size: 13px; line-height: 1.4; color: #fff; word-break: break-all; }
+  
+  .card.matched .card-back {
+    border-color: #4CAF50;
+    background: linear-gradient(135deg, rgba(76,175,80,0.2), rgba(56,142,60,0.15));
+    animation: matchPulse 0.5s ease;
+  }
+  @keyframes matchPulse {
+    0%, 100% { transform: rotateY(180deg) scale(1); }
+    50% { transform: rotateY(180deg) scale(1.05); }
+  }
+
+  .card.wrong .card-back {
+    border-color: #f44336;
+    animation: wrongShake 0.4s ease;
+  }
+  @keyframes wrongShake {
+    0%, 100% { transform: rotateY(180deg) translateX(0); }
+    25% { transform: rotateY(180deg) translateX(-5px); }
+    75% { transform: rotateY(180deg) translateX(5px); }
+  }
+
+  .controls {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 0 20px 30px;
+  }
+  .btn {
+    padding: 12px 35px;
+    border: none;
+    border-radius: 25px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin: 0 8px;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #FFD54F, #FF9800);
+    color: #1a1a4e;
+    font-weight: bold;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(255,213,79,0.3); }
+  .btn-secondary {
+    background: rgba(255,255,255,0.1);
+    color: #90CAF9;
+    border: 1px solid rgba(144,202,249,0.3);
+  }
+  .btn-secondary:hover { background: rgba(255,255,255,0.15); }
+
+  .win-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .win-overlay.active { display: flex; }
+  .win-box {
+    background: linear-gradient(135deg, #1a237e, #0d1b3e);
+    border: 2px solid rgba(255,213,79,0.4);
+    border-radius: 20px;
+    padding: 40px;
+    text-align: center;
+    max-width: 400px;
+    animation: winPop 0.5s ease;
+  }
+  @keyframes winPop {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .win-box .trophy { font-size: 60px; margin-bottom: 15px; }
+  .win-box h2 { color: #FFD54F; font-size: 24px; margin-bottom: 10px; }
+  .win-box p { color: #90CAF9; margin-bottom: 8px; }
+  .win-box .stars { font-size: 30px; margin: 15px 0; }
+
+  .difficulty-selector {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 0 20px 15px;
+  }
+  .diff-btn {
+    padding: 6px 18px;
+    border: 1px solid rgba(144,202,249,0.3);
+    border-radius: 15px;
+    background: rgba(255,255,255,0.03);
+    color: #90CAF9;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .diff-btn:hover, .diff-btn.active {
+    background: rgba(144,202,249,0.1);
+    border-color: #90CAF9;
+  }
+
+  .back-link {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 10;
+    color: #90CAF9;
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.3s;
+  }
+  .back-link:hover { color: #FFD54F; }
+
+  @media (max-width: 600px) {
+    .game-board { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .page-header h1 { font-size: 22px; }
+    .mode-btn { padding: 8px 16px; font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<a href="interactive-courseware.html" class="back-link">← 返回课件</a>
+
+<div class="page-header">
+  <h1>🧩 省份匹配游戏</h1>
+  <p>找出配对的省份信息，挑战你的记忆力！</p>
+</div>
+
+<div class="mode-selector">
+  <button class="mode-btn active" onclick="setMode('capital')">🏛️ 省份 ↔ 省会</button>
+  <button class="mode-btn" onclick="setMode('abbr')">📝 省份 ↔ 简称</button>
+  <button class="mode-btn" onclick="setMode('feature')">🎯 省份 ↔ 特色</button>
+</div>
+
+<div class="difficulty-selector">
+  <button class="diff-btn" onclick="setDiff('easy')">⭐ 简单（6对）</button>
+  <button class="diff-btn active" onclick="setDiff('normal')">⭐⭐ 普通（8对）</button>
+  <button class="diff-btn" onclick="setDiff('hard')">⭐⭐⭐ 困难（12对）</button>
+</div>
+
+<div class="game-info">
+  <span>🎯 已匹配：<strong id="matchedCount">0</strong> / <strong id="totalPairs">8</strong></span>
+  <span>🆙 尝试次数：<strong id="attempts">0</strong></span>
+  <span>⏱️ 用时：<strong id="timer">0</strong>秒</span>
+</div>
+
+<div class="game-board" id="gameBoard"></div>
+
+<div class="controls">
+  <button class="btn btn-primary" onclick="startGame()">🔄 重新开始</button>
+  <button class="btn btn-secondary" onclick="showHint()">💡 提示（3次）</button>
+</div>
+
+<!-- 完成弹窗 -->
+<div class="win-overlay" id="winOverlay">
+  <div class="win-box">
+    <div class="trophy">🏆</div>
+    <h2>恭喜完成！</h2>
+    <p id="winStats"></p>
+    <div class="stars" id="winStars"></div>
+    <button class="btn btn-primary" onclick="startGame()" style="margin-top:15px;">🔄 再玩一次</button>
+  </div>
+</div>
+
+<script>
+// ========== 省份数据 ==========
+const provinceData = {
+  '北京':   { capital: '北京',   abbr: '京', feature: '天安门、长城' },
+  '天津':   { capital: '天津',   abbr: '津', feature: '狗不理包子' },
+  '河北':   { capital: '石家庄', abbr: '冀', feature: '承德避暑山庄' },
+  '山西':   { capital: '太原',   abbr: '晋', feature: '平遥古城' },
+  '内蒙古': { capital: '呼和浩特', abbr: '蒙', feature: '大草原' },
+  '辽宁':   { capital: '沈阳',   abbr: '辽', feature: '沈阳故宫' },
+  '吉林':   { capital: '长春',   abbr: '吉', feature: '长白山' },
+  '黑龙江': { capital: '哈尔滨', abbr: '黑', feature: '冰雪大世界' },
+  '上海':   { capital: '上海',   abbr: '沪', feature: '东方明珠' },
+  '江苏':   { capital: '南京',   abbr: '苏', feature: '苏州园林' },
+  '浙江':   { capital: '杭州',   abbr: '浙', feature: '西湖' },
+  '安徽':   { capital: '合肥',   abbr: '皖', feature: '黄山' },
+  '福建':   { capital: '福州',   abbr: '闽', feature: '武夷山' },
+  '江西':   { capital: '南昌',   abbr: '赣', feature: '滕王阁' },
+  '山东':   { capital: '济南',   abbr: '鲁', feature: '泰山' },
+  '河南':   { capital: '郑州',   abbr: '豫', feature: '少林寺' },
+  '湖北':   { capital: '武汉',   abbr: '鄂', feature: '黄鹤楼' },
+  '湖南':   { capital: '长沙',   abbr: '湘', feature: '张家界' },
+  '广东':   { capital: '广州',   abbr: '粤', feature: '早茶' },
+  '广西':   { capital: '南宁',   abbr: '桂', feature: '桂林山水' },
+  '海南':   { capital: '海口',   abbr: '琼', feature: '三亚海滩' },
+  '重庆':   { capital: '重庆',   abbr: '渝', feature: '火锅' },
+  '四川':   { capital: '成都',   abbr: '川', feature: '大熊猫' },
+  '贵州':   { capital: '贵阳',   abbr: '黔', feature: '黄果树瀑布' },
+  '云南':   { capital: '昆明',   abbr: '云', feature: '丽江古城' },
+  '西藏':   { capital: '拉萨',   abbr: '藏', feature: '布达拉宫' },
+  '陕西':   { capital: '西安',   abbr: '陕', feature: '兵马俑' },
+  '甘肃':   { capital: '兰州',   abbr: '甘', feature: '敦煌莫高窟' },
+  '青海':   { capital: '西宁',   abbr: '青', feature: '青海湖' },
+  '宁夏':   { capital: '银川',   abbr: '宁', feature: '西夏王陵' },
+  '新疆':   { capital: '乌鲁木齐', abbr: '新', feature: '吐鲁番葡萄' },
+  '台湾':   { capital: '台北',   abbr: '台', feature: '日月潭' },
+  '香港':   { capital: '—',      abbr: '港', feature: '迪士尼乐园' },
+  '澳门':   { capital: '—',      abbr: '澳', feature: '大三巴牌坊' }
+};
+
+const emojis = {
+  '北京':'🏛️','天津':'🎡','河北':'🏰','山西':'⛩️','内蒙古':'🐎',
+  '辽宁':'❄️','吉林':'⛄','黑龙江':'🧊','上海':'🗼','江苏':'🌸',
+  '浙江':'🍵','安徽':'🏔️','福建':'🍵','江西':'🐒','山东':'🏔️',
+  '河南':'🥋','湖北':'🌉','湖南':'🐼','广东':'🗼','广西':'🏝️',
+  '海南':'🏖️','重庆':'🌶️','四川':'🐼','贵州':'💧','云南':'🌺',
+  '西藏':'🏔️','陕西':'🏯','甘肃':'🏜️','青海':'🌊','宁夏':'🕌',
+  '新疆':'🍇','台湾':'🏔️','香港':'🎢','澳门':'⛪'
+};
+
+// ========== 游戏状态 ==========
+let currentMode = 'capital';
+let currentDiff = 'normal';
+let cards = [];
+let flippedCards = [];
+let matchedPairs = 0;
+let totalPairs = 8;
+let attempts = 0;
+let timerInterval = null;
+let seconds = 0;
+let gameActive = false;
+let hintsLeft = 3;
+
+function getPairCount() {
+  return { easy: 6, normal: 8, hard: 12 }[currentDiff];
+}
+
+// ========== 开始游戏 ==========
+function startGame() {
+  clearInterval(timerInterval);
+  seconds = 0;
+  attempts = 0;
+  matchedPairs = 0;
+  flippedCards = [];
+  gameActive = true;
+  hintsLeft = 3;
+
+  totalPairs = getPairCount();
+  
+  document.getElementById('matchedCount').textContent = '0';
+  document.getElementById('totalPairs').textContent = totalPairs;
+  document.getElementById('attempts').textContent = '0';
+  document.getElementById('timer').textContent = '0';
+  document.getElementById('winOverlay').classList.remove('active');
+
+  const provinces = Object.keys(provinceData);
+  const shuffled = provinces.sort(() => Math.random() - 0.5).slice(0, totalPairs);
+
+  cards = [];
+  shuffled.forEach(name => {
+    const info = provinceData[name];
+    let pair = [];
+    
+    if (currentMode === 'capital') {
+      pair = [
+        { id: name + '_a', type: 'province', text: name, matchId: name },
+        { id: name + '_b', type: 'capital', text: info.capital, matchId: name }
+      ];
+    } else if (currentMode === 'abbr') {
+      pair = [
+        { id: name + '_a', type: 'province', text: name, matchId: name },
+        { id: name + '_b', type: 'abbr', text: info.abbr, matchId: name }
+      ];
+    } else {
+      pair = [
+        { id: name + '_a', type: 'province', text: name, matchId: name },
+        { id: name + '_b', type: 'feature', text: info.feature, matchId: name }
+      ];
+    }
+    cards.push(...pair);
+  });
+
+  cards = cards.sort(() => Math.random() - 0.5);
+  renderBoard();
+
+  timerInterval = setInterval(() => {
+    seconds++;
+    document.getElementById('timer').textContent = seconds;
+  }, 1000);
+}
+
+// ========== 渲染面板 ==========
+function renderBoard() {
+  const board = document.getElementById('gameBoard');
+  board.innerHTML = '';
+
+  cards.forEach((card, idx) => {
+    const el = document.createElement('div');
+    el.className = 'card';
+    el.dataset.idx = idx;
+    el.onclick = () => flipCard(idx);
+    
+    const emoji = emojis[card.text] || emojis[card.matchId] || '📍';
+    
+    el.innerHTML = `
+      <div class="card-inner">
+        <div class="card-face card-front">❓</div>
+        <div class="card-face card-back">
+          <div class="card-emoji">${card.type === 'province' ? emoji : '📍'}</div>
+          <div class="card-text">${card.text}</div>
+        </div>
+      </div>
+    `;
+    board.appendChild(el);
+  });
+}
+
+// ========== 翻牌 ==========
+function flipCard(idx) {
+  if (!gameActive) return;
+  
+  const cardEl = document.querySelectorAll('.card')[idx];
+  if (cardEl.classList.contains('flipped') || cardEl.classList.contains('matched')) return;
+  if (flippedCards.length >= 2) return;
+
+  cardEl.classList.add('flipped');
+  flippedCards.push({ idx, card: cards[idx] });
+
+  if (flippedCards.length === 2) {
+    attempts++;
+    document.getElementById('attempts').textContent = attempts;
+    
+    const [a, b] = flippedCards;
+    
+    if (a.card.matchId === b.card.matchId) {
+      setTimeout(() => {
+        document.querySelectorAll('.card')[a.idx].classList.add('matched');
+        document.querySelectorAll('.card')[b.idx].classList.add('matched');
+        matchedPairs++;
+        document.getElementById('matchedCount').textContent = matchedPairs;
+        flippedCards = [];
+        
+        if (matchedPairs === totalPairs) {
+          endGame();
+        }
+      }, 500);
+    } else {
+      setTimeout(() => {
+        document.querySelectorAll('.card')[a.idx].classList.add('wrong');
+        document.querySelectorAll('.card')[b.idx].classList.add('wrong');
+        
+        setTimeout(() => {
+          document.querySelectorAll('.card')[a.idx].classList.remove('flipped', 'wrong');
+          document.querySelectorAll('.card')[b.idx].classList.remove('flipped', 'wrong');
+          flippedCards = [];
+        }, 800);
+      }, 800);
+    }
+  }
+}
+
+// ========== 结束游戏 ==========
+function endGame() {
+  gameActive = false;
+  clearInterval(timerInterval);
+  
+  const accuracy = attempts > 0 ? Math.round((totalPairs / attempts) * 100) : 0;
+  let stars = '⭐';
+  if (accuracy >= 80 && seconds < totalPairs * 10) stars = '⭐⭐⭐';
+  else if (accuracy >= 60) stars = '⭐⭐';
+  
+  document.getElementById('winStats').textContent = 
+    `用时 ${seconds} 秒 | 尝试 ${attempts} 次 | 准确率 ${accuracy}%`;
+  document.getElementById('winStars').textContent = stars;
+  document.getElementById('winOverlay').classList.add('active');
+}
+
+// ========== 提示 ==========
+function showHint() {
+  if (!gameActive || hintsLeft <= 0) return;
+  
+  const unmatched = [];
+  document.querySelectorAll('.card').forEach((el, idx) => {
+    if (!el.classList.contains('matched')) {
+      unmatched.push(idx);
+    }
+  });
+  
+  if (unmatched.length === 0) return;
+  
+  const randomIdx = unmatched[Math.floor(Math.random() * unmatched.length)];
+  const el = document.querySelectorAll('.card')[randomIdx];
+  el.classList.add('flipped');
+  
+  hintsLeft--;
+  setTimeout(() => {
+    el.classList.remove('flipped');
+  }, 1000);
+}
+
+// ========== 设置模式 ==========
+function setMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-btn').forEach((btn, i) => {
+    const modes = ['capital', 'abbr', 'feature'];
+    btn.classList.toggle('active', modes[i] === mode);
+  });
+  startGame();
+}
+
+function setDiff(diff) {
+  currentDiff = diff;
+  document.querySelectorAll('.diff-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.includes(
+      { easy: '简单', normal: '普通', hard: '困难' }[diff]
+    ));
+  });
+  startGame();
+}
+
+// ========== 启动 ==========
+startGame();
+</script>
+</body>
+</html>
