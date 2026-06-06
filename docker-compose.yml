@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: china_app_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: china_app
+      MYSQL_USER: china_app
+      MYSQL_PASSWORD: ChinaApp2026!
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    container_name: china_app_backend
+    volumes:
+      - ./backend:/app
+      - ./images:/app/media/images
+      - ./png-images:/app/media/png-images
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DJANGO_SECRET_KEY=dev-secret-key-change-in-production
+      - DJANGO_DEBUG=True
+      - DJANGO_ALLOWED_HOSTS=*
+      - DB_ENGINE=django.db.backends.mysql
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_NAME=china_app
+      - DB_USER=china_app
+      - DB_PASSWORD=ChinaApp2026!
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: china_app_frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  mysql_data:

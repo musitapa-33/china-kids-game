@@ -1,0 +1,8 @@
+-- 初始化数据库
+CREATE DATABASE IF NOT EXISTS china_app
+    DEFAULT CHARACTER SET utf8mb4
+    DEFAULT COLLATE utf8mb4_unicode_ci;
+
+CREATE USER IF NOT EXISTS 'china_app'@'%' IDENTIFIED BY 'ChinaApp2026!';
+GRANT ALL PRIVILEGES ON china_app.* TO 'china_app'@'%';
+FLUSH PRIVILEGES;

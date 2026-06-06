@@ -1,112 +1,118 @@
-# 🇨🇳 环游中国 - 儿童地理学习游戏
+# 环游中国 - 儿童地理学习应用
 
-一个面向儿童的互动式中国地理学习应用，通过游戏化方式帮助孩子们认识中国的34个省级行政区。
+基于 Vue 3 + Django + MySQL + Docker + Element Plus 构建的儿童地理学习应用。
 
-## ✨ 功能特色
+## 功能特性
 
-### 🗺️ 1. 互动地图探索
-- SVG 中国地图，点击省份即可探索
-- 每个省份显示：简称、省会、特色景点/美食
-- 进度追踪，已学习的省份会高亮显示
+- 🏠 首页 - 展示应用功能入口
+- 🗺️ 地图探索 - 浏览中国34个省级行政区
+- 🧩 拼图游戏 - 省份拼图挑战
+- ✏️ 答题闯关 - 地理知识问答
+- 🏆 积分系统 - 收集徽章和积分
+- 📷 图片探索 - 查看省份风景图片
 
-### 🧩 2. 省份拼图游戏
-- 拖拽省份到正确位置
-- 三种难度：简单（18省）、中等（26省）、困难（34省全收）
-- 实时反馈，错误省份会返回并提示正确答案
+## 技术栈
 
-### 📝 3. 地理知识问答
-- 随机出题：省会、简称、特色等
-- 积分系统，答对得分
-- 答错显示正确答案，帮助学习
+### 前端
+- Vue 3
+- Element Plus
+- Vite
+- Axios
 
-### 🖼️ 4. 省份图片探索
-- 86张精美 JPG 风景图片
-- 45张 PNG 卡通头像/美食图片
-- 点击省份卡片，弹窗浏览该省特色图片
+### 后端
+- Django 4.2
+- Django REST Framework
+- MySQL 8.0
 
-### 🎴 5. 匹配游戏
-- 三种模式：省份-简称、省份-省会、省份-特色
-- 三种难度：简单（6对）、中等（8对）、困难（12对）
-- 翻牌匹配，锻炼记忆力
+### 容器化
+- Docker
+- Docker Compose
 
-### 📚 6. 互动课件
-- 11页精美幻灯片
-- 涵盖：中国概况、四大区域、首都、民族、美食等
-- 左右箭头导航，支持键盘操作
+## 快速开始
 
-## 🚀 使用方法
-
-### 本地运行
-直接用浏览器打开 `index.html` 即可，无需服务器。
+### 使用 Docker Compose（推荐）
 
 ```bash
-# 或者用本地服务器运行（推荐）
-npx serve .
-# 然后访问 http://localhost:3000
+# 启动所有服务
+docker-compose up -d
+
+# 查看日志
+docker-compose logs -f
+
+# 停止服务
+docker-compose down
 ```
 
-### 在线访问
-将项目部署到任意静态网站托管服务即可，例如：
-- GitHub Pages
-- Gitee Pages
-- Vercel
-- Netlify
+### 手动运行
 
-## 📁 项目结构
+#### 后端
 
-```
-china-kids-game/
-├── index.html                # 主应用（地图+拼图+答题）
-├── interactive-courseware.html  # 互动课件（11页幻灯片）
-├── province-gallery.html     # 省份图片探索
-├── matching-game.html        # 匹配游戏
-├── images/                  # 86张 JPG 风景图片
-│   ├── image1.jpg
-│   └── ...
-└── png-images/             # 45张 PNG 卡通图片
-    ├── image1.png
-    └── ...
+```bash
+cd backend
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py loaddata initial_data.json
+python manage.py runserver 0.0.0.0:8000
 ```
 
-## 🎮 功能导航
+#### 前端
 
-| 页面 | 文件名 | 功能 |
-|------|--------|------|
-| 主页 | `index.html` | 地图探索、拼图、答题、积分 |
-| 课件 | `interactive-courseware.html` | 11页互动幻灯片 |
-| 图片 | `province-gallery.html` | 省份图片浏览 |
-| 游戏 | `matching-game.html` | 翻牌匹配游戏 |
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-## 💻 技术栈
+## 项目结构
 
-- **纯前端**：HTML5 + CSS3 + JavaScript（无框架依赖）
-- **SVG 地图**：Interactive China Map
-- **动画效果**：CSS3 Animations
-- **数据存储**：localStorage（保存学习进度）
-- **响应式设计**：适配桌面端和移动端
+```
+china-app/
+├── backend/                 # Django 后端
+│   ├── china_app/          # 项目配置
+│   ├── provinces/          # 省份管理应用
+│   ├── game/              # 游戏管理应用
+│   ├── quiz/              # 答题管理应用
+│   ├── score/             # 积分管理应用
+│   ├── fixtures/          # 初始数据
+│   └── requirements.txt
+├── frontend/              # Vue 前端
+│   ├── src/
+│   │   ├── components/    # Vue 组件
+│   │   ├── api/          # API 接口
+│   │   ├── stores/       # 状态管理
+│   │   ├── App.vue       # 主应用组件
+│   │   └── main.js       # 入口文件
+│   ├── package.json
+│   └── vite.config.js
+├── images/               # 省份图片
+├── png-images/           # PNG 图标
+└── docker-compose.yml
+```
 
-## 🎯 教育目标
+## API 接口
 
-- ✅ 认识中国 34 个省级行政区
-- ✅ 记住各省简称和省会
-- ✅ 了解各地特色风景和美食
-- ✅ 培养地理兴趣和爱国情怀
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `/api/provinces/` | GET | 获取省份列表 |
+| `/api/provinces/{id}/` | GET | 获取单个省份 |
+| `/api/quiz/questions/random/` | GET | 获取随机题目 |
+| `/api/score/` | POST | 创建积分记录 |
+| `/api/score/visit/` | POST | 打卡省份 |
+| `/api/score/add_score/` | POST | 增加积分 |
 
-## 📱 兼容性
+## 徽章系统
 
-- ✅ Chrome/Edge（推荐）
-- ✅ Firefox
-- ✅ Safari
-- ✅ 移动端浏览器
+| 徽章 | 条件 |
+|------|------|
+| 🌟 初次探索 | 探索第一个省份 |
+| 🗺️ 探索十省 | 探索10个省份 |
+| 🏆 走遍中国 | 探索全部34个省份 |
+| ⭐ 百分达人 | 积分达到100 |
+| 👑 地理王者 | 积分达到500 |
 
-## 🤝 贡献
+## 开发说明
 
-欢迎提交 Issue 和 Pull Request！
-
-## 📄 许可证
-
-MIT License
-
----
-
-**🎉 让我们一起环游中国，认识美丽的大好河山！**
+- 前端开发服务器：http://localhost:5173
+- 后端 API：http://localhost:8000
+- 数据库：MySQL 8.0 (端口 3306)
+- 管理员界面：http://localhost:8000/admin
