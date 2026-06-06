@@ -125,6 +125,7 @@
     padding: 8px;
     text-align: center;
     transition: all 0.3s;
+    overflow: hidden;
   }
   .card-front {
     background: linear-gradient(135deg, rgba(255,213,79,0.15), rgba(255,152,0,0.1));
@@ -136,17 +137,24 @@
     box-shadow: 0 0 20px rgba(255,213,79,0.2);
   }
   .card-back {
-    background: linear-gradient(135deg, rgba(26,35,126,0.9), rgba(13,27,62,0.9));
+    background: linear-gradient(135deg, rgba(26,35,126,0.95), rgba(13,27,62,0.95));
     border: 2px solid rgba(144,202,249,0.3);
     transform: rotateY(180deg);
     overflow: hidden;
   }
-  .card-back .card-emoji { font-size: 28px; margin-bottom: 6px; }
-  .card-back .card-text { font-size: 13px; line-height: 1.4; color: #fff; word-break: break-all; }
-  
+  .card-back .card-img {
+    width: 100%;
+    height: 55%;
+    object-fit: cover;
+    border-radius: 8px 8px 0 0;
+    margin-bottom: 4px;
+  }
+  .card-back .card-emoji { font-size: 22px; margin-bottom: 2px; }
+  .card-back .card-text { font-size: 12px; line-height: 1.3; color: #fff; word-break: break-all; padding: 0 4px; }
+
   .card.matched .card-back {
     border-color: #4CAF50;
-    background: linear-gradient(135deg, rgba(76,175,80,0.2), rgba(56,142,60,0.15));
+    background: linear-gradient(135deg, rgba(76,175,80,0.25), rgba(56,142,60,0.2));
     animation: matchPulse 0.5s ease;
   }
   @keyframes matchPulse {
@@ -259,6 +267,7 @@
     .game-board { grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .page-header h1 { font-size: 22px; }
     .mode-btn { padding: 8px 16px; font-size: 13px; }
+    .card-back .card-text { font-size: 11px; }
   }
 </style>
 </head>
@@ -267,7 +276,7 @@
 <a href="interactive-courseware.html" class="back-link">← 返回课件</a>
 
 <div class="page-header">
-  <h1>🧩 省份匹配游戏</h1>
+  <h1>🃏 省份匹配游戏</h1>
   <p>找出配对的省份信息，挑战你的记忆力！</p>
 </div>
 
@@ -293,7 +302,7 @@
 
 <div class="controls">
   <button class="btn btn-primary" onclick="startGame()">🔄 重新开始</button>
-  <button class="btn btn-secondary" onclick="showHint()">💡 提示（3次）</button>
+  <button class="btn btn-secondary" onclick="showHint()">💡 提示（<span id="hintsLeft">3</span>次）</button>
 </div>
 
 <!-- 完成弹窗 -->
@@ -308,42 +317,42 @@
 </div>
 
 <script>
-// ========== 省份数据 ==========
+// ========== 省份数据（含图片） ==========
 const provinceData = {
-  '北京':   { capital: '北京',   abbr: '京', feature: '天安门、长城' },
-  '天津':   { capital: '天津',   abbr: '津', feature: '狗不理包子' },
-  '河北':   { capital: '石家庄', abbr: '冀', feature: '承德避暑山庄' },
-  '山西':   { capital: '太原',   abbr: '晋', feature: '平遥古城' },
-  '内蒙古': { capital: '呼和浩特', abbr: '蒙', feature: '大草原' },
-  '辽宁':   { capital: '沈阳',   abbr: '辽', feature: '沈阳故宫' },
-  '吉林':   { capital: '长春',   abbr: '吉', feature: '长白山' },
-  '黑龙江': { capital: '哈尔滨', abbr: '黑', feature: '冰雪大世界' },
-  '上海':   { capital: '上海',   abbr: '沪', feature: '东方明珠' },
-  '江苏':   { capital: '南京',   abbr: '苏', feature: '苏州园林' },
-  '浙江':   { capital: '杭州',   abbr: '浙', feature: '西湖' },
-  '安徽':   { capital: '合肥',   abbr: '皖', feature: '黄山' },
-  '福建':   { capital: '福州',   abbr: '闽', feature: '武夷山' },
-  '江西':   { capital: '南昌',   abbr: '赣', feature: '滕王阁' },
-  '山东':   { capital: '济南',   abbr: '鲁', feature: '泰山' },
-  '河南':   { capital: '郑州',   abbr: '豫', feature: '少林寺' },
-  '湖北':   { capital: '武汉',   abbr: '鄂', feature: '黄鹤楼' },
-  '湖南':   { capital: '长沙',   abbr: '湘', feature: '张家界' },
-  '广东':   { capital: '广州',   abbr: '粤', feature: '早茶' },
-  '广西':   { capital: '南宁',   abbr: '桂', feature: '桂林山水' },
-  '海南':   { capital: '海口',   abbr: '琼', feature: '三亚海滩' },
-  '重庆':   { capital: '重庆',   abbr: '渝', feature: '火锅' },
-  '四川':   { capital: '成都',   abbr: '川', feature: '大熊猫' },
-  '贵州':   { capital: '贵阳',   abbr: '黔', feature: '黄果树瀑布' },
-  '云南':   { capital: '昆明',   abbr: '云', feature: '丽江古城' },
-  '西藏':   { capital: '拉萨',   abbr: '藏', feature: '布达拉宫' },
-  '陕西':   { capital: '西安',   abbr: '陕', feature: '兵马俑' },
-  '甘肃':   { capital: '兰州',   abbr: '甘', feature: '敦煌莫高窟' },
-  '青海':   { capital: '西宁',   abbr: '青', feature: '青海湖' },
-  '宁夏':   { capital: '银川',   abbr: '宁', feature: '西夏王陵' },
-  '新疆':   { capital: '乌鲁木齐', abbr: '新', feature: '吐鲁番葡萄' },
-  '台湾':   { capital: '台北',   abbr: '台', feature: '日月潭' },
-  '香港':   { capital: '—',      abbr: '港', feature: '迪士尼乐园' },
-  '澳门':   { capital: '—',      abbr: '澳', feature: '大三巴牌坊' }
+  '北京':   { capital: '北京',   abbr: '京', feature: '天安门、长城',   img: 'images/image4.jpg' },
+  '天津':   { capital: '天津',   abbr: '津', feature: '狗不理包子',     img: 'images/image7.jpg' },
+  '河北':   { capital: '石家庄', abbr: '冀', feature: '承德避暑山庄',   img: 'images/image10.jpg' },
+  '山西':   { capital: '太原',   abbr: '晋', feature: '平遥古城',       img: 'images/image13.jpg' },
+  '内蒙古': { capital: '呼和浩特', abbr: '蒙', feature: '大草原',         img: 'images/image15.jpg' },
+  '辽宁':   { capital: '沈阳',   abbr: '辽', feature: '沈阳故宫',       img: 'images/image19.jpg' },
+  '吉林':   { capital: '长春',   abbr: '吉', feature: '长白山',         img: 'images/image21.jpg' },
+  '黑龙江': { capital: '哈尔滨', abbr: '黑', feature: '冰雪大世界',     img: 'images/image25.jpg' },
+  '上海':   { capital: '上海',   abbr: '沪', feature: '东方明珠',       img: 'images/image31.jpg' },
+  '江苏':   { capital: '南京',   abbr: '苏', feature: '苏州园林',       img: 'images/image33.jpg' },
+  '浙江':   { capital: '杭州',   abbr: '浙', feature: '西湖',           img: 'images/image32.jpg' },
+  '安徽':   { capital: '合肥',   abbr: '皖', feature: '黄山',           img: 'images/image37.jpg' },
+  '福建':   { capital: '福州',   abbr: '闽', feature: '武夷山',         img: 'images/image38.jpg' },
+  '江西':   { capital: '南昌',   abbr: '赣', feature: '滕王阁',         img: 'images/image41.jpg' },
+  '山东':   { capital: '济南',   abbr: '鲁', feature: '泰山',           img: 'images/image35.jpg' },
+  '河南':   { capital: '郑州',   abbr: '豫', feature: '少林寺',         img: 'images/image49.jpg' },
+  '湖北':   { capital: '武汉',   abbr: '鄂', feature: '黄鹤楼',         img: 'images/image51.jpg' },
+  '湖南':   { capital: '长沙',   abbr: '湘', feature: '张家界',         img: 'images/image55.jpg' },
+  '广东':   { capital: '广州',   abbr: '粤', feature: '早茶',           img: 'images/image60.jpg' },
+  '广西':   { capital: '南宁',   abbr: '桂', feature: '桂林山水',       img: 'images/image63.jpg' },
+  '海南':   { capital: '海口',   abbr: '琼', feature: '三亚海滩',       img: 'images/image62.jpg' },
+  '重庆':   { capital: '重庆',   abbr: '渝', feature: '火锅',           img: 'images/image73.jpg' },
+  '四川':   { capital: '成都',   abbr: '川', feature: '大熊猫',         img: 'images/image75.jpg' },
+  '贵州':   { capital: '贵阳',   abbr: '黔', feature: '黄果树瀑布',     img: 'images/image77.jpg' },
+  '云南':   { capital: '昆明',   abbr: '云', feature: '丽江古城',       img: 'images/image78.jpg' },
+  '西藏':   { capital: '拉萨',   abbr: '藏', feature: '布达拉宫',       img: 'images/image81.jpg' },
+  '陕西':   { capital: '西安',   abbr: '陕', feature: '兵马俑',         img: 'images/image87.jpg' },
+  '甘肃':   { capital: '兰州',   abbr: '甘', feature: '敦煌莫高窟',     img: 'images/image90.jpg' },
+  '青海':   { capital: '西宁',   abbr: '青', feature: '青海湖',         img: 'images/image92.jpg' },
+  '宁夏':   { capital: '银川',   abbr: '宁', feature: '西夏王陵',       img: 'images/image94.jpg' },
+  '新疆':   { capital: '乌鲁木齐', abbr: '新', feature: '吐鲁番葡萄',   img: 'images/image97.jpg' },
+  '台湾':   { capital: '台北',   abbr: '台', feature: '日月潭',         img: 'images/image43.jpg' },
+  '香港':   { capital: '—',      abbr: '港', feature: '迪士尼乐园',     img: 'images/image66.jpg' },
+  '澳门':   { capital: '—',      abbr: '澳', feature: '大三巴牌坊',     img: 'images/image69.jpg' }
 };
 
 const emojis = {
@@ -389,6 +398,7 @@ function startGame() {
   document.getElementById('totalPairs').textContent = totalPairs;
   document.getElementById('attempts').textContent = '0';
   document.getElementById('timer').textContent = '0';
+  document.getElementById('hintsLeft').textContent = '3';
   document.getElementById('winOverlay').classList.remove('active');
 
   const provinces = Object.keys(provinceData);
@@ -401,18 +411,18 @@ function startGame() {
     
     if (currentMode === 'capital') {
       pair = [
-        { id: name + '_a', type: 'province', text: name, matchId: name },
-        { id: name + '_b', type: 'capital', text: info.capital, matchId: name }
+        { id: name + '_a', type: 'province', text: name, matchId: name, img: info.img },
+        { id: name + '_b', type: 'capital', text: info.capital, matchId: name, img: info.img }
       ];
     } else if (currentMode === 'abbr') {
       pair = [
-        { id: name + '_a', type: 'province', text: name, matchId: name },
-        { id: name + '_b', type: 'abbr', text: info.abbr, matchId: name }
+        { id: name + '_a', type: 'province', text: name, matchId: name, img: info.img },
+        { id: name + '_b', type: 'abbr', text: info.abbr, matchId: name, img: info.img }
       ];
     } else {
       pair = [
-        { id: name + '_a', type: 'province', text: name, matchId: name },
-        { id: name + '_b', type: 'feature', text: info.feature, matchId: name }
+        { id: name + '_a', type: 'province', text: name, matchId: name, img: info.img },
+        { id: name + '_b', type: 'feature', text: info.feature, matchId: name, img: info.img }
       ];
     }
     cards.push(...pair);
@@ -438,13 +448,14 @@ function renderBoard() {
     el.dataset.idx = idx;
     el.onclick = () => flipCard(idx);
     
-    const emoji = emojis[card.text] || emojis[card.matchId] || '📍';
+    const emoji = emojis[card.matchId] || '📍';
     
     el.innerHTML = `
       <div class="card-inner">
         <div class="card-face card-front">❓</div>
         <div class="card-face card-back">
-          <div class="card-emoji">${card.type === 'province' ? emoji : '📍'}</div>
+          <img class="card-img" src="${card.img}" alt="${card.matchId}" onerror="this.style.display='none'">
+          <div class="card-emoji">${emoji}</div>
           <div class="card-text">${card.text}</div>
         </div>
       </div>
@@ -531,6 +542,7 @@ function showHint() {
   el.classList.add('flipped');
   
   hintsLeft--;
+  document.getElementById('hintsLeft').textContent = hintsLeft;
   setTimeout(() => {
     el.classList.remove('flipped');
   }, 1000);
